@@ -422,9 +422,13 @@ void dc_readdir(void)
 #ifdef __APPLE_CC__
 	send_uint(0);
 #else
+#if !defined(__FreeBSD__) && !defined(__CYGWIN__)
 	send_uint(somedirent->d_off);
 #endif
+#endif
+#ifndef __CYGWIN__
 	send_uint(somedirent->d_reclen);
+#endif
 	send_uint(somedirent->d_type);
 #endif
 	send_uint(strlen(somedirent->d_name)+1);
@@ -473,7 +477,6 @@ void dc_gdbpacket(void)
 {
     size_t in_size, out_size;
 
-    static int socket_fd = -1;
     static char gdb_buf[GDBBUFSIZE];
 
     int count, size, retval = 0;
@@ -484,14 +487,27 @@ void dc_gdbpacket(void)
     if (in_size)
 	recv_data(gdb_buf, in_size > GDBBUFSIZE ? GDBBUFSIZE : in_size, 0);
 
-    if (gdb_server_socket < 0) {
+#ifdef __MINGW32__
+	/* Winsock SOCKET is defined as an unsigned int, so -1 won't work here */
+	static SOCKET socket_fd = 0;
+
+	if (gdb_server_socket == INVALID_SOCKET) {
+#else
+    static int socket_fd = 0;
+
+	if (gdb_server_socket < 0) {
+#endif
 	send_uint(-1);
 	return;
     }
 
-    if (socket_fd < 0) {
+    if (socket_fd == 0) {
 	printf( "waiting for gdb client connection...\n" );
-	if ( (socket_fd = accept( gdb_server_socket, NULL, NULL )) < 0) {
+	socket_fd = accept( gdb_server_socket, NULL, NULL );
+#ifdef __MINGW32__
+	if ( socket_fd != INVALID_SOCKET)
+#endif
+	if ( socket_fd == 0) {
 	    perror("error accepting gdb server connection");
 	    send_uint(-1);
 	    return;
@@ -499,14 +515,27 @@ void dc_gdbpacket(void)
     }
 
     if (in_size)
-	write(socket_fd, gdb_buf, in_size);
+#ifdef __MINGW32__
+	send(socket_fd, gdb_buf, in_size, 0);		
+#else		
+	write(socket_fd, gdb_buf, in_size);		
+#endif
 
     if (out_size) {
+#ifdef __MINGW32__
+	retval = recv(socket_fd, gdb_buf, out_size > GDBBUFSIZE ? GDBBUFSIZE : out_size, 0);
+#else
 	retval = read(socket_fd, gdb_buf, out_size > GDBBUFSIZE ? GDBBUFSIZE : out_size);
+#endif
 	if (retval == 0)
 	    socket_fd = -1;
     }
-
+#ifdef __MINGW32__
+	if(retval == SOCKET_ERROR) {
+	fprintf(stderr, "Got socket error: %d\n", WSAGetLastError());
+	return;
+	}
+#endif
     send_uint(retval);
     if (retval > 0)
 	send_data(gdb_buf, retval, 0);
