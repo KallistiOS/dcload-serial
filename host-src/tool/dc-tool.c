@@ -284,7 +284,7 @@ char serial_getc()
     retval = serial_read(&tmp, 1);
     if (retval == -1) {
         printf("serial_getc: read error!\n");
-		tmp = 0x00;
+        tmp = 0x00;
     }
     return tmp;
 }
@@ -697,7 +697,7 @@ int open_gdb_socket(int port)
 
 void usage(void)
 {
-    printf("\n%s %s by <andrewk@napalm-x.com>\n\n",PACKAGE, VERSION);
+    printf("\n%s %s by <andrewk@napalm-x.com>\n\n", PACKAGE, VERSION);
     printf("-x <filename> Upload and execute <filename>\n");
     printf("-u <filename> Upload <filename>\n");
     printf("-d <filename> Download to <filename>\n");
