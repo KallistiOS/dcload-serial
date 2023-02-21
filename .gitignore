@@ -4,6 +4,7 @@
 *.srec
 *.exe
 *.elf
+.DS_Store
 example-src/console-test
 example-src/exception-test
 target-src/dcload/dcload

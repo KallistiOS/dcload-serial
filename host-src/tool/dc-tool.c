@@ -51,6 +51,9 @@
 #include <IOKit/serial/ioss.h>
 #include <sys/ioctl.h>
 #endif
+#ifdef __FreeBSD__
+#include <netinet/in.h>
+#endif
 #include "minilzo.h"
 #include "syscalls.h"
 #include "dc-io.h"
@@ -281,7 +284,11 @@ char serial_getc()
     retval = serial_read(&tmp, 1);
     if (retval == -1) {
         printf("serial_getc: read error!\n");
-        tmp = 0x00;
+#ifndef __MINGW32__		
+		tmp = (char)NULL;
+#else
+		tmp = 0x00;
+#endif
     }
     return tmp;
 }
