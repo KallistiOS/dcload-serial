@@ -19,6 +19,8 @@
  *
  */
 
+#include "config.h" // needed for newer BFD library
+ 
 #ifdef WITH_BFD
 #include <bfd.h>
 #else
@@ -63,7 +65,7 @@ int gdb_server_socket = -1;
 #define STOP_BITS	ONESTOPBIT
 #endif
 
-#define VERSION "1.0.4"
+#define VERSION PACKAGE_VERSION
 
 #ifndef O_BINARY
 #define O_BINARY 0
@@ -123,7 +125,7 @@ char    *optarg;                /* argument associated with option */
 #define BADARG  (int)':'
 #define EMSG    ""
 
-char *__progname="dc-tool";
+char *__progname=PACKAGE;
 
 /*
  * getopt --
@@ -279,7 +281,11 @@ char serial_getc()
     retval = serial_read(&tmp, 1);
     if (retval == -1) {
         printf("serial_getc: read error!\n");
-	tmp = (char)NULL;
+#ifndef __MINGW32__		
+		tmp = (char)NULL;
+#else
+		tmp = 0x00;
+#endif
     }
     return tmp;
 }
@@ -692,7 +698,7 @@ int open_gdb_socket(int port)
 
 void usage(void)
 {
-    printf("\ndc-tool %s by <andrewk@napalm-x.com>\n\n",VERSION);
+    printf("\n%s %s by <andrewk@napalm-x.com>\n\n",PACKAGE, VERSION);
     printf("-x <filename> Upload and execute <filename>\n");
     printf("-u <filename> Upload <filename>\n");
     printf("-d <filename> Download to <filename>\n");
