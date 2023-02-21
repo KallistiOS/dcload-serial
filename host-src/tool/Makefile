@@ -13,6 +13,10 @@ else
 	LDFLAGS	= $(HOSTLDFLAGS) -lelf
 endif
 
+ifdef STANDALONE_BINARY
+	LDFLAGS += -static
+endif
+
 DCTOOL	= dc-tool$(EXECUTABLEEXTENSION)
 
 OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o
@@ -30,9 +34,10 @@ minilzo.o: $(LZOFILES)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 
 
 .PHONY : install
-install: $(DCTOOL)
-	-mkdir $(TOOLINSTALLDIR)
+install: $(DCTOOL) | $(TOOLINSTALLDIR)	
 	cp $(DCTOOL) $(TOOLINSTALLDIR)
+$(TOOLINSTALLDIR):
+	-mkdir $(TOOLINSTALLDIR)
 
 .PHONY : clean
 clean:
