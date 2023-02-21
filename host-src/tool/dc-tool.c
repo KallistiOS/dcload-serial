@@ -19,7 +19,7 @@
  *
  */
 
-#include "config.h" // needed for newer BFD library
+#include "config.h"
  
 #ifdef WITH_BFD
 #include <bfd.h>
@@ -285,9 +285,9 @@ char serial_getc()
     if (retval == -1) {
         printf("serial_getc: read error!\n");
 #ifndef __MINGW32__		
-		tmp = (char)NULL;
+        tmp = (char)NULL;
 #else
-		tmp = 0x00;
+        tmp = 0x00;
 #endif
     }
     return tmp;
@@ -701,7 +701,7 @@ int open_gdb_socket(int port)
 
 void usage(void)
 {
-    printf("\n%s %s by <andrewk@napalm-x.com>\n\n",PACKAGE, VERSION);
+    printf("\n%s %s by <andrewk@napalm-x.com>\n\n", PACKAGE, VERSION);
     printf("-x <filename> Upload and execute <filename>\n");
     printf("-u <filename> Upload <filename>\n");
     printf("-d <filename> Download to <filename>\n");
