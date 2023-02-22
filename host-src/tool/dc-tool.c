@@ -223,24 +223,24 @@ HANDLE hCommPort;
 
 void cleanup()
 {
-	if (gdb_socket_started) {	
-		gdb_socket_started = 0;
+    if (gdb_socket_started) {	
+        gdb_socket_started = 0;
 		
-		// Send SIGTERM to the GDB Client, telling remote DC program has ended
-		char gdb_buf[16];
-		strcpy(gdb_buf, "+$X0f#ee\0");		
+        // Send SIGTERM to the GDB Client, telling remote DC program has ended
+        char gdb_buf[16];
+        strcpy(gdb_buf, "+$X0f#ee\0");		
 		
 #ifdef __MINGW32__		
-		send(socket_fd, gdb_buf, strlen(gdb_buf), 0);
-		sleep(1);
-		closesocket(socket_fd);
-		closesocket(gdb_server_socket);
-		WSACleanup();
+        send(socket_fd, gdb_buf, strlen(gdb_buf), 0);
+        sleep(1);
+        closesocket(socket_fd);
+        closesocket(gdb_server_socket);
+        WSACleanup();
 #else
-		write(socket_fd, gdb_buf, strlen(gdb_buf));
-		sleep(1);
-		close(socket_fd);
-		close(gdb_server_socket);
+        write(socket_fd, gdb_buf, strlen(gdb_buf));
+        sleep(1);
+        close(socket_fd);
+        close(gdb_server_socket);
 #endif
 	}
 }
@@ -318,11 +318,7 @@ char serial_getc()
     retval = serial_read(&tmp, 1);
     if (retval == -1) {
         printf("serial_getc: read error!\n");
-#ifndef __MINGW32__		
-		tmp = (char)NULL;
-#else
-		tmp = 0x00;
-#endif
+        tmp = 0x00;
     }
     return tmp;
 }
@@ -526,8 +522,8 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest)
 
     dcfd = open(devicename, O_RDWR | O_NOCTTY);
     if (dcfd < 0) {
-	perror(devicename);
-	exit(-1);
+        perror(devicename);
+        exit(-1);
     }
 
     tcgetattr(dcfd, &oldtio);	// save current serial port settings
@@ -590,11 +586,11 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest)
 
     // we don't error on these because it *may* still work
     if (tcflush(dcfd, TCIFLUSH) < 0) {
-	perror("tcflush");
+        perror("tcflush");
     }
     if (tcsetattr(dcfd, TCSANOW, &newtio) < 0) {
-	perror("tcsetattr");
-	printf("warning: your baud rate is likely set incorrectly\n");
+        perror("tcsetattr");
+        printf("warning: your baud rate is likely set incorrectly\n");
     }
 
 #ifdef __APPLE__
@@ -736,7 +732,7 @@ int open_gdb_socket(int port)
 	  return -1;
 	}
 
-  int checklisten = listen( gdb_server_socket, 0 );
+    int checklisten = listen( gdb_server_socket, 0 );
 #ifdef __MINGW32__
 	if ( checklisten == SOCKET_ERROR ) {
 #else
@@ -746,7 +742,7 @@ int open_gdb_socket(int port)
 	  return -1;
     }
 
-	return 0;
+    return 0;
 }
 
 void usage(void)
@@ -782,11 +778,11 @@ int start_ws()
     int failed = 0;
     failed = WSAStartup(MAKEWORD(2,2), &wsaData);
     if ( failed != NO_ERROR ) {
-	perror("WSAStartup");
-	return 1;
+        perror("WSAStartup");
+        return 1;
     }
 	
-	return 0;
+    return 0;
 }
 #endif
 
