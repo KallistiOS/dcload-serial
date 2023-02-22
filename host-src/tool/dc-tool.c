@@ -51,12 +51,25 @@
 #include <IOKit/serial/ioss.h>
 #include <sys/ioctl.h>
 #endif
+#ifdef __FreeBSD__
+#include <netinet/in.h>
+#endif
 #include "minilzo.h"
 #include "syscalls.h"
 #include "dc-io.h"
 
 int _nl_msg_cat_cntr;
+
+/* GNU Debugger (GDB) */
+int gdb_socket_started = 0;
+#ifndef __MINGW32__
 int gdb_server_socket = -1;
+int socket_fd = 0;
+#else
+/* Winsock SOCKET is defined as an unsigned int, so -1 won't work here */	
+SOCKET gdb_server_socket = 0;
+SOCKET socket_fd = 0;	
+#endif
 
 #define DCLOADBUFFER	16384 /* was 8192 */
 #ifdef _WIN32
@@ -208,6 +221,30 @@ struct termios oldtio;
 HANDLE hCommPort;
 #endif
 
+void cleanup()
+{
+	if (gdb_socket_started) {	
+		gdb_socket_started = 0;
+		
+		// Send SIGTERM to the GDB Client, telling remote DC program has ended
+		char gdb_buf[16];
+		strcpy(gdb_buf, "+$X0f#ee\0");		
+		
+#ifdef __MINGW32__		
+		send(socket_fd, gdb_buf, strlen(gdb_buf), 0);
+		sleep(1);
+		closesocket(socket_fd);
+		closesocket(gdb_server_socket);
+		WSACleanup();
+#else
+		write(socket_fd, gdb_buf, strlen(gdb_buf));
+		sleep(1);
+		close(socket_fd);
+		close(gdb_server_socket);
+#endif
+	}
+}
+
 #ifdef _WIN32
 int serial_read(void *buffer, int count)
 {
@@ -281,7 +318,11 @@ char serial_getc()
     retval = serial_read(&tmp, 1);
     if (retval == -1) {
         printf("serial_getc: read error!\n");
-        tmp = 0x00;
+#ifndef __MINGW32__		
+		tmp = (char)NULL;
+#else
+		tmp = 0x00;
+#endif
     }
     return tmp;
 }
@@ -620,6 +661,7 @@ void finish_serial(void)
     tcflush(dcfd, TCIOFLUSH);
     tcsetattr(dcfd, TCSANOW, &oldtio);
 #endif
+	cleanup();
 }
 
 /* close the host serial port */
@@ -674,22 +716,37 @@ int open_gdb_socket(int port)
     server_addr.sin_port = htons(port);
     server_addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
 
-    if((gdb_server_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-        perror("error creating gdb server socket");
-        return -1;
+    gdb_server_socket = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+#ifdef __MINGW32__
+	if ( gdb_server_socket == INVALID_SOCKET) {
+#else
+    if ( gdb_server_socket < 0 ) {
+#endif
+      perror( "error creating gdb server socket" );
+      return -1;
     }
 
-    if(bind(gdb_server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr)) < 0) {
-        perror("error binding gdb server socket");
-        return -1;
+    int checkbind = bind( gdb_server_socket, (struct sockaddr*)&server_addr, sizeof( server_addr ) );
+#ifdef __MINGW32__
+	if( checkbind == SOCKET_ERROR ) {
+#else
+    if ( checkbind < 0 ) {
+#endif
+	  perror( "error binding gdb server socket" );
+	  return -1;
+	}
+
+  int checklisten = listen( gdb_server_socket, 0 );
+#ifdef __MINGW32__
+	if ( checklisten == SOCKET_ERROR ) {
+#else
+	if ( checklisten < 0 ) {
+#endif
+	  perror( "error listening to gdb server socket" );
+	  return -1;
     }
 
-    if(listen(gdb_server_socket, 0) < 0) {
-        perror("error listening to gdb server socket");
-        return -1;
-    }
-
-    return 0;
+	return 0;
 }
 
 void usage(void)
@@ -713,8 +770,25 @@ void usage(void)
     printf("-i <isofile>  Enable cdfs redirection using iso image <isofile>\n");
     printf("-g            Start a GDB server\n");
     printf("-h            Usage information (you\'re looking at it)\n\n");
+	cleanup();
     exit(0);
 }
+
+/* Got to make sure WinSock is initalized */
+#ifdef __MINGW32__
+int start_ws()
+{
+    WSADATA wsaData;
+    int failed = 0;
+    failed = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if ( failed != NO_ERROR ) {
+	perror("WSAStartup");
+	return 1;
+    }
+	
+	return 0;
+}
+#endif
 
 unsigned int upload(unsigned char *filename, unsigned int address)
 {
@@ -1089,6 +1163,12 @@ void do_dumbterm(void)
     }
 }
 
+#ifdef __MINGW32__
+#define AVAILABLE_OPTIONS 		"x:u:d:a:s:t:b:i:npqheEg"
+#else
+#define AVAILABLE_OPTIONS		"x:u:d:a:s:t:b:c:i:npqheEg"
+#endif
+
 int main(int argc, char *argv[])
 {
     unsigned int address = 0x8c010000;
@@ -1108,11 +1188,7 @@ int main(int argc, char *argv[])
     if (argc < 2)
 	usage();
 
-#ifdef __MINGW32__
-    someopt = getopt(argc, argv, "x:u:d:a:s:t:b:i:npqheEg");
-#else
-    someopt = getopt(argc, argv, "x:u:d:a:s:t:b:c:i:npqheEg");
-#endif
+    someopt = getopt(argc, argv, AVAILABLE_OPTIONS);
     while (someopt > 0) {
 	switch (someopt) {
 	case 'x':
@@ -1186,17 +1262,18 @@ int main(int argc, char *argv[])
 	    use_extclk = 1;
 	    break;
 	case 'g':
-	    printf("Starting a GDB server on port 2159\n");
+	    printf("Starting a GDB server on port 2159\n");		
+#ifdef __MINGW32__
+		if(start_ws())
+		  return -1;		
+#endif
 	    open_gdb_socket(2159);
+		gdb_socket_started = 1;
 	    break;
 	default:
 	    break;
 	}
-#ifdef __MINGW32__
-	someopt = getopt(argc, argv, "x:u:d:a:s:t:b:i:npqhe");
-#else
-	someopt = getopt(argc, argv, "x:u:d:a:s:t:b:c:i:npqhe");
-#endif
+	someopt = getopt(argc, argv, AVAILABLE_OPTIONS);
     }
 
     if ((command == 'x') || (command == 'u')) {
@@ -1226,6 +1303,9 @@ int main(int argc, char *argv[])
 
     if (speedhack)
 	printf("Alternate 115200 enabled\n");
+
+	if (use_extclk)
+	printf("External clock usage enabled\n");
 
     /* test for resonable baud - this is for POSIX systems */
     if (speed != BAUD_RATE) {
@@ -1265,6 +1345,7 @@ int main(int argc, char *argv[])
     case 'd':
 	if (!size) {
 	    printf("You must specify a size (-s <size>) with download (-d <filename>)\n");
+		cleanup();
 	    exit(0);
 	}
 	printf("Download %d bytes at <0x%x> to <%s>\n", size, address,
@@ -1279,5 +1360,6 @@ int main(int argc, char *argv[])
 	    usage();
 	break;
     }
+	cleanup();
     exit(0);
 }
