@@ -553,7 +553,7 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest)
 #ifdef __APPLE__
     if(speed > 115200) {
         /* Necessary to call ioctl to set non-standard speeds (aka higher than 115200) */
-		if (ioctl(dcfd, IOSSIOSPEED, &speed) < 0) {
+        if (ioctl(dcfd, IOSSIOSPEED, &speed) < 0) {
             perror("IOSSIOSPEED");
             printf("warning: your baud rate is likely set incorrectly\n");
         }
