@@ -500,9 +500,7 @@ void dc_gdbpacket(void)
     if (socket_fd == 0) {
         printf( "waiting for gdb client connection...\n" );
         socket_fd = accept( gdb_server_socket, NULL, NULL );
-#ifdef __MINGW32__
-        if (socket_fd != INVALID_SOCKET)
-#endif
+
         if (socket_fd == 0) {
             perror("error accepting gdb server connection");
             send_uint(-1);
