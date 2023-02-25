@@ -753,7 +753,7 @@ int open_gdb_socket(int port)
 
 void usage(void)
 {
-    printf("\n%s %s by <andrewk@napalm-x.com>\n\n", PACKAGE, VERSION);
+    printf("\n%s %s by Andrew \"ADK\" Kieschnick\n\n", PACKAGE, VERSION);
     printf("-x <filename> Upload and execute <filename>\n");
     printf("-u <filename> Upload <filename>\n");
     printf("-d <filename> Download to <filename>\n");
@@ -803,6 +803,7 @@ unsigned int upload(unsigned char *filename, unsigned int address)
 
 #ifdef WITH_BFD
     bfd *somebfd;
+    int sectsize;
 #else
     Elf *elf;
     Elf32_Ehdr *ehdr;
@@ -829,22 +830,23 @@ unsigned int upload(unsigned char *filename, unsigned int address)
 
             for (section = somebfd->sections; section != NULL; section = section->next) {
                 if ((section->flags & SEC_HAS_CONTENTS) && (section->flags & SEC_LOAD)) {
-                    printf("Section %s, ",section->name);
-                    printf("lma 0x%x, ",section->lma);
-                    printf("size %d\n",bfd_section_size(somebfd, section));
-                    if (bfd_section_size(somebfd, section)) {
-                        size += bfd_section_size(somebfd, section);
-                        inbuf = malloc(bfd_section_size(somebfd, section));
-                        bfd_get_section_contents(somebfd, section, inbuf, 0, bfd_section_size(somebfd, section));
+                    sectsize = bfd_section_size(section);
+                    printf("Section %s, ", section->name);
+                    printf("lma 0x%x, ", section->lma);
+                    printf("size %d\n", sectsize);
+                    if (sectsize) {
+                        size += sectsize;
+                        inbuf = malloc(sectsize);
+                        bfd_get_section_contents(somebfd, section, inbuf, 0, sectsize);
 
                         c = 'B';
                         serial_write(&c, 1);
                         blread(&c, 1);
 
                         send_uint(section->lma);
-                        send_uint(bfd_section_size(somebfd, section));
+                        send_uint(sectsize);
 
-                        send_data(inbuf, bfd_section_size(somebfd, section), 1);
+                        send_data(inbuf, sectsize, 1);
 
                         free(inbuf);
                     }
