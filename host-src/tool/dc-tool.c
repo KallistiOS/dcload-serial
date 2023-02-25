@@ -299,7 +299,7 @@ char serial_getc()
     retval = serial_read(&tmp, 1);
     if (retval == -1) {
         printf("serial_getc: read error!\n");
-        tmp = 0x00;
+            tmp = 0x00;
     }
     return tmp;
 }
