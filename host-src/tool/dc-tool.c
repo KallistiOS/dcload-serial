@@ -299,11 +299,7 @@ char serial_getc()
     retval = serial_read(&tmp, 1);
     if (retval == -1) {
         printf("serial_getc: read error!\n");
-#ifndef __MINGW32__		
-        tmp = (char)NULL;
-#else
         tmp = 0x00;
-#endif
     }
 
     return tmp;
@@ -422,8 +418,8 @@ void send_data(unsigned char * addr, unsigned int size, unsigned int verbose)
     buffer = malloc(DCLOADBUFFER + DCLOADBUFFER / 64 + 16 + 3);
 
     if (verbose) {
-    printf("send_data: ");
-    fflush(stdout);
+        printf("send_data: ");
+        fflush(stdout);
     }
 
     while (size) {
@@ -431,6 +427,7 @@ void send_data(unsigned char * addr, unsigned int size, unsigned int verbose)
             sendsize = DCLOADBUFFER;
         else
             sendsize = size;
+
         lzo1x_1_compress((unsigned char *)addr, sendsize, buffer, &csize, wrkmem);
         if (csize < sendsize) {
             // send compressed
@@ -523,8 +520,7 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest)
     newtio.c_lflag = 0;
     newtio.c_cc[VTIME] = 0;	// inter-character timer unused
     newtio.c_cc[VMIN] = 1;	// blocking read until 1 character arrives
-
-
+    
     for (speedsel=0; !speedsel;) {
         switch(speed) {
 #ifdef B1500000
@@ -772,8 +768,8 @@ int start_ws()
     int failed = 0;
     failed = WSAStartup(MAKEWORD(2,2), &wsaData);
     if ( failed != NO_ERROR ) {
-    perror("WSAStartup");
-    return 1;
+        perror("WSAStartup");
+        return 1;
     }
     
     return 0;
@@ -1346,7 +1342,7 @@ int main(int argc, char *argv[])
             usage();
         break;
     }
-    
+
     cleanup();
     exit(0);
 }
