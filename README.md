@@ -2,7 +2,7 @@
 
 **dcload** is a **Sega Dreamcast** (DC) serial loader written originally by 
 [Andrew Kieschnick](http://napalm-x.thegypsy.com/andrewk/dc/), a.k.a.
-**ADK/Napalm**. This program is part of 
+**ADK/Napalm**. It is currently maintained as a part of 
 [KallistiOS](http://gamedev.allusion.net/softprj/kos/) (KOS).
 
 **dcload** is a set of programs made to send and receive data from your Sega
