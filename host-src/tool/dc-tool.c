@@ -19,7 +19,7 @@
  *
  */
 
-#include "config.h" // needed for newer BFD library
+#include "config.h"
  
 #ifdef WITH_BFD
 #include <bfd.h>
@@ -732,7 +732,7 @@ int open_gdb_socket(int port)
 
 void usage(void)
 {
-    printf("\n%s %s by <andrewk@napalm-x.com>\n\n",PACKAGE, VERSION);
+    printf("\n%s %s by <andrewk@napalm-x.com>\n\n", PACKAGE, VERSION);
     printf("-x <filename> Upload and execute <filename>\n");
     printf("-u <filename> Upload <filename>\n");
     printf("-d <filename> Download to <filename>\n");
