@@ -22,7 +22,7 @@ ifdef MINGW32
 endif
 
 ifdef STANDALONE_BINARY
-  LDFLAGS 	+= -static
+	LDFLAGS += -lz -static
 endif
 
 DCTOOL	= dc-tool-ser$(EXECUTABLEEXTENSION)
