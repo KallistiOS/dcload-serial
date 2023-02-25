@@ -2,8 +2,7 @@ WHAT'S NEW IN 1.0.6
 
 * Complete redesign of the build system and compatibility improvements for
   various OS, including: BSD (FreeBSD), GNU/Linux (Debian/Ubuntu), macOS, 
-  MinGW/MSYS (i.e. DreamSDK), MinGW-w64/MSYS2 and Cygwin. The build system is
-  now shared between dcload-ip and dcload-serial. [SiZiOUS]
+  MinGW/MSYS (i.e. DreamSDK), MinGW-w64/MSYS2 and Cygwin. [SiZiOUS]
 * Various improvements on the GDB remote debugging feature. [SiZiOUS]
 * Some minor fixes. [SiZiOUS]
 
