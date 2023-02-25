@@ -555,7 +555,7 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest)
         /* Necessary to call ioctl to set non-standard speeds (aka higher than 115200) */
 		if (ioctl(dcfd, IOSSIOSPEED, &speed) < 0) {
             perror("IOSSIOSPEED");
-            printf("warning: your baud rate is likely set incorrectly (MACOS)\n");
+            printf("warning: your baud rate is likely set incorrectly\n");
         }
     }
 #endif
