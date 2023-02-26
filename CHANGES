@@ -1,3 +1,16 @@
+WHAT'S NEW IN 1.0.6
+
+* Complete redesign of the build system and compatibility improvements for
+  various OS, including: BSD (FreeBSD), GNU/Linux (Debian/Ubuntu), macOS, 
+  MinGW/MSYS (i.e. DreamSDK), MinGW-w64/MSYS2 and Cygwin. [SiZiOUS]
+* Various improvements on the GDB remote debugging feature. [SiZiOUS]
+* Some minor fixes. [SiZiOUS]
+
+WHAT'S NEW IN 1.0.5
+
+* Some fixes.
+* No one ever really documented the changes from 1.0.4 to 1.0.5.
+
 WHATS NEW IN 1.0.4
 
 * added 500000 and 1500000 baud for linux systems using ftdi ft232bm

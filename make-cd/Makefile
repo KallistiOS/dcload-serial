@@ -10,6 +10,9 @@ TOUCH		= touch
 
 all: $(1ST_READ) audio.raw burn-audio data.raw burn-data
 
+$(1ST_READ):
+	cd ../target-src && make
+
 audio.raw:
 	$(DD) if=/dev/zero of=audio.raw bs=2352 count=300
 
@@ -19,6 +22,7 @@ burn-audio: audio.raw
 
 1st_read.bin: $(1ST_READ)
 	$(SCRAMBLE) $(1ST_READ) 1st_read.bin
+	cp $(1ST_READ) 1st_read.bin
 
 data.raw: tmp.iso IP.BIN
 	( cat IP.BIN ; dd if=tmp.iso bs=2048 skip=16 ) > data.raw

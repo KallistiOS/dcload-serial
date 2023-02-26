@@ -18,11 +18,11 @@ endif
 
 # Additional libraries for MinGW/MSYS
 ifdef MINGW32
-  LDFLAGS	+= -lwsock32 -liconv
+  LDFLAGS	+= -lws2_32 -lwsock32 -liconv
 endif
 
 ifdef STANDALONE_BINARY
-  LDFLAGS 	+= -static
+	LDFLAGS += -lz -static
 endif
 
 DCTOOL	= dc-tool-ser$(EXECUTABLEEXTENSION)

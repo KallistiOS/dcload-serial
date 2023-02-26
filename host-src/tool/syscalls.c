@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <utime.h>
@@ -47,7 +48,6 @@ void dc_fstat(void)
     int retval;
 
     filedes = recv_uint();
-
     retval = fstat(filedes, &filestat);
 
     send_uint(filestat.st_dev);
@@ -115,11 +115,11 @@ void dc_read(void)
 void dc_open(void)
 {
     int namelen;
-    unsigned char *pathname;
     int retval;
     int flags;
     int ourflags = 0;
     int mode;
+    unsigned char *pathname;
 
     namelen = recv_uint();
 
@@ -256,10 +256,10 @@ void dc_chdir(void)
 void dc_chmod(void)
 {
     int namelen;
+    int mode;
     unsigned char *pathname;
     int retval;
-    int mode;
-
+    
     namelen = recv_uint();
 
     pathname = malloc(namelen);

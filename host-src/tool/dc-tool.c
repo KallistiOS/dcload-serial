@@ -223,6 +223,7 @@ int dcfd;
 struct termios oldtio;
 #else
 HANDLE hCommPort;
+BOOL bDebugSocketStarted = FALSE;
 #endif
 
 void cleanup()
@@ -257,6 +258,7 @@ int serial_read(void *buffer, int count)
     fSuccess = ReadFile(hCommPort, buffer, count, (DWORD *)&count, NULL);
     if( !fSuccess )
         return -1;
+        
     return count;
 }
 
@@ -267,6 +269,7 @@ int serial_write(void *buffer, int count)
     fSuccess = WriteFile(hCommPort, buffer, count, (DWORD *)&count, NULL);
     if( !fSuccess )
         return -1;
+
     return count;
 }
 
@@ -324,6 +327,7 @@ char serial_getc()
         printf("serial_getc: read error!\n");
         tmp = 0x00;
     }
+
     return tmp;
 }
 
@@ -418,6 +422,7 @@ void recv_data(void *data, unsigned int total, unsigned int verbose)
             break;
         }
     }
+
     if (verbose) {
         printf("\n");
         fflush(stdout);
@@ -489,6 +494,7 @@ void send_data(unsigned char * addr, unsigned int size, unsigned int verbose)
             serial_write(&sum, 1);
             blread(&data, 1);
         }
+        
         size -= sendsize;
         addr += sendsize;
     }
@@ -541,8 +547,7 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest)
     newtio.c_lflag = 0;
     newtio.c_cc[VTIME] = 0;	// inter-character timer unused
     newtio.c_cc[VMIN] = 1;	// blocking read until 1 character arrives
-
-
+    
     for (speedsel=0; !speedsel;) {
         switch(speed) {
 #ifdef B1500000
@@ -577,18 +582,9 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest)
         }
     }
 
-#ifdef __APPLE__
-    if(speed > 115200) {
-        cfsetispeed(&newtio, B115200);
-        cfsetospeed(&newtio, B115200);
-    }
-    else {
-#endif
-        cfsetispeed(&newtio, speedsel);
-        cfsetospeed(&newtio, speedsel);
-#ifdef __APPLE__
-    }
-#endif
+    cfsetispeed(&newtio, speedsel);
+    cfsetospeed(&newtio, speedsel);
+
 
     // we don't error on these because it *may* still work
     if (tcflush(dcfd, TCIFLUSH) < 0) {
@@ -601,7 +597,7 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest)
 
 #ifdef __APPLE__
     if(speed > 115200) {
-        speed_t s = speed; // Set 14400 baud
+        /* Necessary to call ioctl to set non-standard speeds (aka higher than 115200) */
         if (ioctl(dcfd, IOSSIOSPEED, &speed) < 0) {
             perror("IOSSIOSPEED");
             printf("warning: your baud rate is likely set incorrectly\n");
@@ -620,7 +616,7 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest)
 
     if( hCommPort == INVALID_HANDLE_VALUE ) {
         printf( "*Error opening com port\n");
-        output_error();  
+        output_error();
         return -1;
     }
 
@@ -694,19 +690,24 @@ int change_speed(char *device_name, unsigned int speed)
     c = 'S';
     serial_write(&c, 1);
     blread(&c, 1);
+
     if (speedhack && (speed == 115200))
         send_uint(111600); /* get dcload to pick N=13 rather than N=12 */
     else if (use_extclk)
         send_uint(0);
     else
         send_uint(speed);
+        
     printf("Changing speed to %d bps... ", speed);
     close_serial();
+
     if (open_serial(device_name, speed, &dummy)<0)
         return 1;
+        
     send_uint(rv);
     rv = recv_uint();
     printf("done\n");
+
     return 0;
 }
 
@@ -727,7 +728,7 @@ int open_gdb_socket(int port)
         perror( "error creating gdb server socket" );
         return -1;
     }
-
+    
     int checkbind = bind(gdb_server_socket, (struct sockaddr*)&server_addr, sizeof( server_addr ));
 #ifdef __MINGW32__
     if(checkbind == SOCKET_ERROR) {
@@ -773,6 +774,7 @@ void usage(void)
     printf("-g            Start a GDB server\n");
     printf("-h            Usage information (you\'re looking at it)\n\n");
     cleanup();
+    
     exit(0);
 }
 
@@ -1003,17 +1005,11 @@ void download(unsigned char *filename, unsigned int address,
         serial_write("G", 1);
 
     serial_read(&c, 1);
-
     send_uint(address);
-
     send_uint(size);
-
     send_uint(wrkmem);
-
     gettimeofday(&starttime, 0);
-
     recv_data(data, size, 1);
-
     gettimeofday(&endtime, 0);
 
     printf("Received %d bytes\n", size);
@@ -1054,7 +1050,7 @@ void do_console(unsigned char *path, unsigned char *isofile)
         isofd = open((char *)isofile, O_RDONLY | O_BINARY);
         if (isofd < 0)
             perror((char *)isofile);
-        }
+    }
 
 #ifndef __MINGW32__
     if (path)
@@ -1366,6 +1362,7 @@ int main(int argc, char *argv[])
                 usage();
             break;
     }
+
     cleanup();
     exit(0);
 }
