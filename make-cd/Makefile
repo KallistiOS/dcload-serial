@@ -1,6 +1,5 @@
 CDRECORD	= wodim dev=0,0,0 speed=8
 #CDRECORD	= wodim dev=ATAPI:0,0,0 speed=8
-SCRAMBLE	= scramble
 DD		= dd
 CP		= cp
 MKISOFS		= genisoimage
@@ -21,7 +20,6 @@ burn-audio: audio.raw
 	touch burn-audio
 
 1st_read.bin: $(1ST_READ)
-	$(SCRAMBLE) $(1ST_READ) 1st_read.bin
 	cp $(1ST_READ) 1st_read.bin
 
 data.raw: tmp.iso IP.BIN
