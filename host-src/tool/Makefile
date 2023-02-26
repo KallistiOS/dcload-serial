@@ -18,7 +18,7 @@ endif
 
 # Additional libraries for MinGW/MSYS
 ifdef MINGW32
-  LDFLAGS	+= -lwsock32 -liconv
+  LDFLAGS	+= -lws2_32 -lwsock32 -liconv
 endif
 
 ifdef STANDALONE_BINARY
