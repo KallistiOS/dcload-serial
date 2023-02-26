@@ -363,6 +363,7 @@ void dc_utime(void)
     } else {
         retval = utime(pathname, 0);
     }
+
     send_uint(retval);
 
     free(pathname);
@@ -468,7 +469,13 @@ void dc_cdfs_redir_read_sectors(int isofd)
 }
 
 #define GDBBUFSIZE 1024
+#ifndef __MINGW32__
 extern int gdb_server_socket;
+extern int socket_fd;
+#else
+extern SOCKET gdb_server_socket;
+extern SOCKET socket_fd;
+#endif
 
 void dc_gdbpacket(void)
 {
@@ -485,13 +492,8 @@ void dc_gdbpacket(void)
         recv_data(gdb_buf, in_size > GDBBUFSIZE ? GDBBUFSIZE : in_size, 0);
 
 #ifdef __MINGW32__
-    /* Winsock SOCKET is defined as an unsigned int, so -1 won't work here */
-    static SOCKET socket_fd = 0;
-
     if (gdb_server_socket == INVALID_SOCKET) {
 #else
-    static int socket_fd = 0;
-
     if (gdb_server_socket < 0) {
 #endif
         send_uint(-1);
@@ -501,7 +503,7 @@ void dc_gdbpacket(void)
     if (socket_fd == 0) {
         printf( "waiting for gdb client connection...\n" );
         socket_fd = accept( gdb_server_socket, NULL, NULL );
-
+        
         if (socket_fd == 0) {
             perror("error accepting gdb server connection");
             send_uint(-1);
