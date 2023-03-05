@@ -8,8 +8,14 @@ LDFLAGS = $(HOSTLDFLAGS)
 INCLUDE	= -I$(LZOPATH) -I/usr/local/include
 
 ifeq ($(WITH_BFD),1)
+  # Starting from Binutils 2.40, SFrame is required when using BFD
+  LIBSFRAME	=
+  ifneq ("$(wildcard $(TARGETPREFIX)/lib/libsframe.a)","")
+    LIBSFRAME = -lsframe
+  endif
+  
   CFLAGS	+= -DWITH_BFD
-  LDFLAGS	= -L$(BFDLIB) -lbfd -liberty -lintl -lz
+  LDFLAGS	= -L$(BFDLIB) -lbfd $(LIBSFRAME) -liberty -lintl -lz
   INCLUDE	+= -I$(BFDINCLUDE)
 else
   LDFLAGS	= -L$(ELFLIB) -lelf
