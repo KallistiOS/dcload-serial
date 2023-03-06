@@ -7,6 +7,7 @@ CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DBAUD_RATE=$(SERIALSPEED
 LDFLAGS = $(HOSTLDFLAGS)
 INCLUDE	= -I$(LZOPATH) -I/usr/local/include
 
+# Linking with libelf or libbfd, depending of Makefile.cfg
 ifeq ($(WITH_BFD),1)
   # Starting from Binutils 2.40, SFrame is required when using BFD
   LIBSFRAME	=
@@ -27,8 +28,9 @@ ifdef MINGW32
   LDFLAGS	+= -lws2_32 -lwsock32 -liconv
 endif
 
-ifdef STANDALONE_BINARY
-	LDFLAGS += -lz -static
+# Adding static flag if asked
+ifeq ($(STANDALONE_BINARY),1)
+  LDFLAGS += -lz -static
 endif
 
 DCTOOL	= dc-tool-ser$(EXECUTABLEEXTENSION)
