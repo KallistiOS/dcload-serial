@@ -5,7 +5,7 @@ LZOPATH = ../../minilzo.106
 CC		= $(HOSTCC)
 CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DBAUD_RATE=$(SERIALSPEED) -DSERIALDEVICE="\"$(SERIALDEVICE)\"" -DHAVE_GETOPT -DB1500000 -DB500000
 LDFLAGS = $(HOSTLDFLAGS)
-INCLUDE	= -I$(LZOPATH) -I/usr/local/include
+INCLUDE = -I$(LZOPATH) -I/usr/local/include
 
 # Adding static flag if asked
 ifeq ($(STANDALONE_BINARY),1)
@@ -51,7 +51,7 @@ OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o utils.o
 LZOFILES = $(LZOPATH)/minilzo.c $(LZOPATH)/minilzo.h $(LZOPATH)/lzoconf.h
 
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
 all: $(DCTOOL)
 
@@ -62,7 +62,7 @@ minilzo.o: $(LZOFILES)
 	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 
 
 .PHONY : install
-install: $(DCTOOL) | $(TOOLINSTALLDIR)	
+install: $(DCTOOL) | $(TOOLINSTALLDIR)
 	cp $(DCTOOL) $(TOOLINSTALLDIR)
 $(TOOLINSTALLDIR):
 	-mkdir $(TOOLINSTALLDIR)
@@ -72,5 +72,5 @@ clean:
 	rm -f $(OBJECTS)
 
 .PHONY : distclean
-distclean: clean 
+distclean: clean
 	rm -f $(DCTOOL)
