@@ -1316,10 +1316,10 @@ int main(int argc, char *argv[])
         close_serial();
     }
 
-    if (open_serial(device_name, BAUD_RATE, &dummy)<0)
+    if (open_serial(device_name, 57600, &dummy)<0)
         return 1;
 
-    if (speed != BAUD_RATE)
+    if (speed != 57600)
         change_speed(device_name, speed);
 
     switch (command) {
