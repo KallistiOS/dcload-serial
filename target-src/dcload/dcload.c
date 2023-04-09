@@ -189,7 +189,7 @@ send_data_block_compressed(unsigned char * addr, unsigned int size)
     unsigned char *location = addr;
     unsigned char sum = 0;
     unsigned char data;
-    unsigned int csize;
+    lzo_uint csize;
     unsigned int sendsize;
 
     /* send uncompressed if no work memory provided */
@@ -251,7 +251,7 @@ void
 load_data_block_general(unsigned char * addr, unsigned int total, unsigned int verbose)
 {
     unsigned char type, sum, ok;
-    unsigned int size, newsize, realtotal;
+    lzo_uint size, newsize, realtotal;
     unsigned char *tmp = buffer;
     int i;
     unsigned char *data = addr;

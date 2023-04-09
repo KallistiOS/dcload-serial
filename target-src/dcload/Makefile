@@ -1,6 +1,6 @@
 include ../../Makefile.cfg
 
-LZOPATH = ../../minilzo.106
+LZOPATH = ../../minilzo-2.10
 LZO	= ../../host-src/misc/lzo
 
 CC	= $(TARGETCC)

@@ -44,7 +44,7 @@ int main(int argc, char *argv[])
 	unsigned char * data;
 	unsigned char * cdata;
 	int r;
-	unsigned int length,clength;
+	lzo_uint length,clength;
 
         if (argc != 3)
                 usage();
