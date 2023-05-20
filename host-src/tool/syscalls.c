@@ -553,3 +553,11 @@ void dc_gdbpacket(void) {
     if(retval > 0)
         send_data((unsigned char *)gdb_buf, retval, 0);
 }
+
+void dc_exit(void) {
+    int exit_code = (int32_t) recv_uint();
+    printf("Program returned %d\n", exit_code);
+    finish_serial();
+    exit(exit_code);
+}
+

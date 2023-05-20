@@ -44,8 +44,10 @@ int strlen(const char *s) {
     return c;
 }
 
-void dcexit(void) {
+void dcexit(int ret_code)
+{
     scif_putchar(0);
+    put_uint(ret_code);
     scif_flush();
 }
 

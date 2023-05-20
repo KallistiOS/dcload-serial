@@ -1143,8 +1143,7 @@ void do_console(unsigned char *path, unsigned char *isofile) {
 
         switch(command) {
             case 0:
-                finish_serial();
-                exit(0);
+                dc_exit();
                 break;
             case 1:
                 dc_fstat();
