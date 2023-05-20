@@ -858,8 +858,6 @@ void usage(void) {
     printf("-g            Start a GDB server\n");
     printf("-h            Usage information (you\'re looking at it)\n\n");
     cleanup();
-
-    exit(0);
 }
 
 /* Got to make sure WinSock is initalized */
@@ -1212,7 +1210,7 @@ void do_console(unsigned char *path, unsigned char *isofile) {
                 printf("Unimplemented command (%d) \n", command);
                 printf("Assuming program has exited, or something...\n");
                 finish_serial();
-                exit(0);
+                exit(-1);
                 break;
         }
     }
@@ -1262,16 +1260,17 @@ int main(int argc, char *argv[]) {
     unsigned char *isofile = 0;
     int someopt;
 
-    if(argc < 2)
+    if (argc < 2) {
         usage();
-
+	exit(-1);
+    }
     someopt = getopt(argc, argv, AVAILABLE_OPTIONS);
     while(someopt > 0) {
         switch(someopt) {
             case 'x':
                 if(command) {
                     printf("You can only specify one of -x, -u, and -d\n");
-                    exit(0);
+                    exit(-1);
                 }
                 command = 'x';
                 filename = malloc(strlen(optarg) + 1);
@@ -1280,7 +1279,7 @@ int main(int argc, char *argv[]) {
             case 'u':
                 if(command) {
                     printf("You can only specify one of -x, -u, and -d\n");
-                    exit(0);
+                    exit(-1);
                 }
                 command = 'u';
                 filename = malloc(strlen(optarg) + 1);
@@ -1289,7 +1288,7 @@ int main(int argc, char *argv[]) {
             case 'd':
                 if(command) {
                     printf("You can only specify one of -x, -u, and -d\n");
-                    exit(0);
+                    exit(-1);
                 }
                 command = 'd';
                 filename = malloc(strlen(optarg) + 1);
@@ -1331,6 +1330,7 @@ int main(int argc, char *argv[]) {
                 break;
             case 'h':
                 usage();
+		exit(0);
                 break;
             case 'e':
                 speedhack = 1;
@@ -1358,7 +1358,7 @@ int main(int argc, char *argv[]) {
         struct stat statbuf;
         if(stat((char *)filename, &statbuf)) {
             perror((char *)filename);
-            exit(1);
+            exit(-1);
         }
     }
 
@@ -1426,7 +1426,7 @@ int main(int argc, char *argv[]) {
             if(!size) {
                 printf("You must specify a size (-s <size>) with download (-d <filename>)\n");
                 cleanup();
-                exit(0);
+                exit(-1);
             }
             printf("Download %d bytes at <0x%x> to <%s>\n", size, address,
                 filename);
@@ -1438,6 +1438,7 @@ int main(int argc, char *argv[]) {
                 do_dumbterm();
             else
                 usage();
+	    	exit(-1);
             break;
     }
 
