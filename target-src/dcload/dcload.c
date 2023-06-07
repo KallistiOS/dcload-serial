@@ -25,6 +25,8 @@
 
 #define NAME "dcload-serial " DCLOAD_VERSION
 
+#define INITIAL_SPEED   57600
+
 #define VIDMODEREG (volatile unsigned int *)0xa05f8044
 #define VIDBORDER (volatile unsigned int *)0xa05f8040
 
