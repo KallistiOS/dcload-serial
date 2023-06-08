@@ -27,6 +27,8 @@
 
 #define NAME "dcload-serial " DCLOAD_VERSION
 
+#define INITIAL_SPEED   57600
+
 #define VIDMODEREG (volatile unsigned int *)0xa05f8044
 #define VIDBORDER (volatile unsigned int *)0xa05f8040
 
@@ -284,7 +286,7 @@ int main(void) {
     unsigned int console;
     unsigned int start;
 
-    scif_init(SERIALSPEED);
+    scif_init(INITIAL_SPEED);
 
     cdfs_redir_save(); /* will only save value once */
     cdfs_redir_disable();
@@ -390,7 +392,7 @@ int main(void) {
                 scif_puts("\n");
                 break;
             default:
-                scif_init(SERIALSPEED);
+                scif_init(INITIAL_SPEED);
                 break;
         }
     }

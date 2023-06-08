@@ -71,6 +71,8 @@ SOCKET gdb_server_socket = 0;
 SOCKET socket_fd = 0;	
 #endif
 
+#define INITIAL_SPEED  57600
+
 #define DCLOADBUFFER	16384 /* was 8192 */
 #ifdef _WIN32
 #define DATA_BITS	8
@@ -561,8 +563,8 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest) {
             speedsel = B9600;
             break;
         default:
-            printf("Unsupported baudrate (%d) - switching to default (%d)\n", speed, BAUD_RATE);
-            *speedtest = speed = BAUD_RATE;
+            printf("Unsupported baudrate (%d) - falling back to initial baudrate (%d)\n", speed, INITIAL_SPEED);
+            *speedtest = speed = INITIAL_SPEED;
             break;
         }
     }
@@ -741,7 +743,7 @@ void usage(void) {
     printf("-a <address>  Set address to <address> (default: 0x8c010000)\n");
     printf("-s <size>     Set size to <size>\n");
     printf("-t <device>   Use <device> to communicate with dc (default: %s)\n", SERIALDEVICE);
-    printf("-b <baudrate> Use <baudrate> (default: %d)\n", BAUD_RATE);
+    printf("-b <baudrate> Use <baudrate> (default: %d)\n", DEFAULT_SPEED);
     printf("-e            Try alternate 115200 (must also use -b 115200)\n");
     printf("-E            Use an external clock for the DC's serial port\n");
     printf("-n            Do not attach console and fileserver\n");
@@ -1153,7 +1155,7 @@ int main(int argc, char *argv[]) {
     unsigned int dumbterm = 0;
     unsigned int quiet = 0;
     unsigned char command = 0;
-    unsigned int dummy, speed = BAUD_RATE;
+    unsigned int dummy, speed = DEFAULT_SPEED;
     char *device_name = SERIALDEVICE;
     unsigned int cdfs_redir = 0;
     unsigned char *isofile = 0;
@@ -1283,16 +1285,16 @@ int main(int argc, char *argv[]) {
         printf("External clock usage enabled\n");
 
     /* test for resonable baud - this is for POSIX systems */
-    if(speed != BAUD_RATE) {
-        if(open_serial(device_name, speed, &speed)<0)
+    if (speed != INITIAL_SPEED) {
+        if (open_serial(device_name, speed, &speed)<0)
             return 1;
         close_serial();
     }
-
-    if(open_serial(device_name, BAUD_RATE, &dummy)<0)
+  
+    if (open_serial(device_name, INITIAL_SPEED, &dummy)<0)
         return 1;
 
-    if(speed != BAUD_RATE)
+    if (speed != INITIAL_SPEED)
         change_speed(device_name, speed);
 
     switch (command) {
@@ -1315,9 +1317,9 @@ int main(int argc, char *argv[]) {
         case 'u':
             printf("Upload <%s> at <0x%x>\n", filename, address);
             upload(filename, address);
-            change_speed(device_name, BAUD_RATE);
+            change_speed(device_name, INITIAL_SPEED);
             break;
-            case 'd':
+        case 'd':
             if(!size) {
                 printf("You must specify a size (-s <size>) with download (-d <filename>)\n");
                 cleanup();
@@ -1326,7 +1328,7 @@ int main(int argc, char *argv[]) {
             printf("Download %d bytes at <0x%x> to <%s>\n", size, address,
                 filename);
             download(filename, address, size, quiet);
-            change_speed(device_name, BAUD_RATE);
+            change_speed(device_name, INITIAL_SPEED);
             break;
         default:
             if(dumbterm)
