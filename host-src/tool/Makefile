@@ -2,7 +2,7 @@ include ../../Makefile.cfg
 
 LZOPATH = ../../minilzo.106
 
-CC		= $(HOSTCC)
+CC		  = $(HOSTCC)
 CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DBAUD_RATE=$(SERIALSPEED) -DSERIALDEVICE="\"$(SERIALDEVICE)\"" -DHAVE_GETOPT -DB1500000 -DB500000
 LDFLAGS = $(HOSTLDFLAGS)
 INCLUDE = -I$(LZOPATH) -I/usr/local/include
@@ -69,8 +69,8 @@ $(TOOLINSTALLDIR):
 
 .PHONY : clean
 clean:
-	rm -f $(OBJECTS)
+	-rm -f $(OBJECTS)
 
 .PHONY : distclean
 distclean: clean
-	rm -f $(DCTOOL)
+	-rm -f $(DCTOOL)

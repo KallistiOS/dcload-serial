@@ -1,9 +1,9 @@
 CDRECORD	= wodim dev=0,0,0 speed=8
 #CDRECORD	= wodim dev=ATAPI:0,0,0 speed=8
-DD		= dd
-CP		= cp
+DD			= dd
+CP			= cp
 MKISOFS		= genisoimage
-CAT		= cat
+CAT			= cat
 TOUCH		= touch
 1ST_READ	= ../target-src/1st_read/1st_read.bin
 
@@ -30,12 +30,12 @@ tmp.iso: 1st_read.bin burn-audio
 
 burn-data: data.raw
 	$(CDRECORD) -xa -tao -multi data.raw
-	rm -f audio.raw data.raw burn-audio
+	-rm -f audio.raw data.raw burn-audio
 
 .PHONY : clean
 clean:
-	rm -f tmp.iso burn-audio 1st_read.bin
+	-rm -f tmp.iso burn-audio 1st_read.bin
 
 .PHONY : distclean
 distclean: clean
-	rm -f audio.raw data.raw
+	-rm -f audio.raw data.raw

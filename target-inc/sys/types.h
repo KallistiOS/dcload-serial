@@ -44,37 +44,37 @@
 #define _ST_INT32
 #endif
 
-# ifndef	_POSIX_SOURCE
+#ifndef  _POSIX_SOURCE
 
-#  define	physadr		physadr_t
-#  define	quad		quad_t
+#define  physadr    physadr_t
+#define  quad       quad_t
 
 #ifndef _WINSOCK_H
-typedef	unsigned char	u_char;
-typedef	unsigned short	u_short;
-typedef	unsigned int	u_int;
-typedef	unsigned long	u_long;
+typedef unsigned char   u_char;
+typedef unsigned short  u_short;
+typedef unsigned int    u_int;
+typedef unsigned long   u_long;
 #endif
 
-typedef	unsigned short	ushort;		/* System V compatibility */
-typedef	unsigned int	uint;		/* System V compatibility */
-# endif	/*!_POSIX_SOURCE */
+typedef unsigned short  ushort; /* System V compatibility */
+typedef unsigned int    uint;   /* System V compatibility */
+#endif /*!_POSIX_SOURCE */
 
 #ifndef __time_t_defined
 typedef _TIME_T_ time_t;
 #define __time_t_defined
 #endif
 
-typedef	long	daddr_t;
-typedef	char *	caddr_t;
+typedef long    daddr_t;
+typedef char *  caddr_t;
 
 #ifdef __MS_types__
-typedef	unsigned long	ino_t;
+typedef unsigned long   ino_t;
 #else
 #ifdef __sparc__
-typedef	unsigned long	ino_t;
+typedef unsigned long   ino_t;
 #else
-typedef	unsigned short	ino_t;
+typedef unsigned short  ino_t;
 #endif
 #endif
 
@@ -102,18 +102,16 @@ typedef int32_t register_t;
  * how the file was compiled (e.g. -mint16 vs -mint32, etc.).
  */
 
-typedef	short	dev_t;
-
-typedef	long	off_t;
-
-typedef	unsigned short	uid_t;
-typedef	unsigned short	gid_t;
-typedef int pid_t;
-typedef	long key_t;
-typedef long ssize_t;
+typedef short   dev_t;
+typedef long    off_t;
+typedef unsigned short  uid_t;
+typedef unsigned short  gid_t;
+typedef int     pid_t;
+typedef long    key_t;
+typedef long    ssize_t;
 
 #ifdef __MS_types__
-typedef	char *	addr_t;
+typedef char *  addr_t;
 typedef int mode_t;
 #else
 #if defined (__sparc__) && !defined (__sparc_v9__)
@@ -134,41 +132,41 @@ typedef unsigned short nlink_t;
    defines Windows versions of them).  Note that a program which
    includes the Windows sockets.h header must know what it is doing;
    it must not call the cygwin32 select function.  */
-# if ! defined (_POSIX_SOURCE) && ! defined (_WINSOCK_H)
+#if ! defined (_POSIX_SOURCE) && ! defined (_WINSOCK_H)
 
-#  define	NBBY	8		/* number of bits in a byte */
+#define	NBBY    8   /* number of bits in a byte */
 /*
  * Select uses bit masks of file descriptors in longs.
  * These macros manipulate such bit fields (the filesystem macros use chars).
  * FD_SETSIZE may be defined by the user, but the default here
  * should be >= NOFILE (param.h).
  */
-#  ifndef	FD_SETSIZE
-#	define	FD_SETSIZE	64
-#  endif
+#ifndef FD_SETSIZE
+#define FD_SETSIZE  64
+#endif
 
-typedef	long	fd_mask;
-#  define	NFDBITS	(sizeof (fd_mask) * NBBY)	/* bits per mask */
-#  ifndef	howmany
-#	define	howmany(x,y)	(((x)+((y)-1))/(y))
-#  endif
+typedef long    fd_mask;
+#define NFDBITS (sizeof (fd_mask) * NBBY)   /* bits per mask */
+#ifndef howmany
+#define howmany(x,y)    (((x)+((y)-1))/(y))
+#endif
 
 /* We use a macro for fd_set so that including Sockets.h afterwards
    can work.  */
 typedef	struct _types_fd_set {
-	fd_mask	fds_bits[howmany(FD_SETSIZE, NFDBITS)];
+    fd_mask	fds_bits[howmany(FD_SETSIZE, NFDBITS)];
 } _types_fd_set;
 
 #define fd_set _types_fd_set
 
-#  define	FD_SET(n, p)	((p)->fds_bits[(n)/NFDBITS] |= (1L << ((n) % NFDBITS)))
-#  define	FD_CLR(n, p)	((p)->fds_bits[(n)/NFDBITS] &= ~(1L << ((n) % NFDBITS)))
-#  define	FD_ISSET(n, p)	((p)->fds_bits[(n)/NFDBITS] & (1L << ((n) % NFDBITS)))
-#  define	FD_ZERO(p)	bzero((caddr_t)(p), sizeof (*(p)))
+#define FD_SET(n, p)    ((p)->fds_bits[(n)/NFDBITS] |= (1L << ((n) % NFDBITS)))
+#define FD_CLR(n, p)    ((p)->fds_bits[(n)/NFDBITS] &= ~(1L << ((n) % NFDBITS)))
+#define FD_ISSET(n, p)  ((p)->fds_bits[(n)/NFDBITS] & (1L << ((n) % NFDBITS)))
+#define FD_ZERO(p)      bzero((caddr_t)(p), sizeof (*(p)))
 
-# endif	/* ! defined (_POSIX_SOURCE) && ! defined (_WINSOCK_H) */
+#endif /* ! defined (_POSIX_SOURCE) && ! defined (_WINSOCK_H) */
 
 #undef __MS_types__
 #undef _ST_INT32
 
-#endif	/* _SYS_TYPES_H */
+#endif /* _SYS_TYPES_H */
