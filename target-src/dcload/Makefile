@@ -46,8 +46,8 @@ minilzo.o: $(LZOFILES)
 
 .PHONY : clean
 clean:
-	rm -f $(DCLOBJECTS) $(EXCOBJECTS) dcload exception dcload.bin exception.bin
+	-rm -f $(DCLOBJECTS) $(EXCOBJECTS) dcload exception dcload.bin exception.bin
 
 .PHONY : distclean
 distclean: clean 
-	rm -f *.lzo
+	-rm -f *.lzo

@@ -26,16 +26,18 @@
 // See: https://stackoverflow.com/a/40160038
 int vasprintf(char **strp, const char *fmt, va_list ap) {    
     int len = _vscprintf(fmt, ap);
-    if (len == -1) {
+    if(len == -1) {
         return -1;
     }
+
     size_t size = (size_t)len + 1;
     char *str = malloc(size);
-    if (!str) {
+    if(!str) {
         return -1;
-    }    
+    }
+
     int r = __mingw_vsnprintf(str, len + 1, fmt, ap);
-    if (r == -1) {
+    if(r == -1) {
         free(str);
         return -1;
     }
@@ -48,8 +50,10 @@ int vasprintf(char **strp, const char *fmt, va_list ap) {
 int __cdecl __MINGW_NOTHROW libintl_asprintf(char **strp, const char *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
+
     int r = vasprintf(strp, fmt, ap);
     va_end(ap);
+
     return r;
 }
 
@@ -67,6 +71,7 @@ FILE * __cdecl __MINGW_NOTHROW _imp____acrt_iob_func(int handle) {
         case 1: return stdout;
         case 2: return stderr;
     }
+    
     return NULL;
 }
 

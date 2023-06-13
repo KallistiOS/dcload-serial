@@ -17,16 +17,16 @@ extern "C" {
    libc/stdlib/mallocr.c.  */
 
 struct mallinfo {
-  int arena;    /* total space allocated from system */
-  int ordblks;  /* number of non-inuse chunks */
-  int smblks;   /* unused -- always zero */
-  int hblks;    /* number of mmapped regions */
-  int hblkhd;   /* total space in mmapped regions */
-  int usmblks;  /* unused -- always zero */
-  int fsmblks;  /* unused -- always zero */
-  int uordblks; /* total allocated space */
-  int fordblks; /* total non-inuse space */
-  int keepcost; /* top-most, releasable (via malloc_trim) space */
+    int arena;    /* total space allocated from system */
+    int ordblks;  /* number of non-inuse chunks */
+    int smblks;   /* unused -- always zero */
+    int hblks;    /* number of mmapped regions */
+    int hblkhd;   /* total space in mmapped regions */
+    int usmblks;  /* unused -- always zero */
+    int fsmblks;  /* unused -- always zero */
+    int uordblks; /* total allocated space */
+    int fordblks; /* total non-inuse space */
+    int keepcost; /* top-most, releasable (via malloc_trim) space */
 };	
 
 /* The routines.  */
@@ -87,7 +87,7 @@ extern _VOID _mstats_r _PARAMS ((struct _reent *, char *));
    that information.  */
 
 extern int __malloc_copy _PARAMS ((int (*) (void *, void *, void *, int),
-				   void *, int));
+               void *, int));
 #endif /* __CYGWIN32 */
 
 #ifdef __cplusplus
