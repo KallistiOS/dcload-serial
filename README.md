@@ -1,4 +1,4 @@
-# dcload-serial 1.1.0
+# dcload-serial 1.0.6
 
 **dcload** is a **Sega Dreamcast** (DC) serial loader written originally by 
 [Andrew Kieschnick](http://napalm-x.thegypsy.com/andrewk/dc/), a.k.a.
