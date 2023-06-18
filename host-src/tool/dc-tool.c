@@ -362,7 +362,7 @@ unsigned int recv_uint(void) {
 /* receive total bytes from dc and store in data */
 void recv_data(void *data, unsigned int total, unsigned int verbose) {
     unsigned char type, sum, ok;
-    unsigned int size, newsize;
+    lzo_uint size, newsize;
     unsigned char *tmp;
 
     if(verbose) {
@@ -425,7 +425,7 @@ void send_data(unsigned char * addr, unsigned int size, unsigned int verbose) {
     unsigned char *location = (unsigned char *) addr;
     unsigned char sum = 0;
     unsigned char data;
-    unsigned int csize;
+    lzo_uint csize;
     unsigned int sendsize;
     unsigned char c;
     unsigned char * buffer;

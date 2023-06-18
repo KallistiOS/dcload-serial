@@ -37,63 +37,66 @@ void usage(void) {
     exit(1);
 }
 
-int main(int argc, char *argv[]) {
-    int in, out;
-    unsigned char *data;
-    unsigned char *cdata;
-    int r;
-    unsigned int length, clength;
+int main(int argc, char *argv[])
+{
+        int in, out;
+	unsigned char * data;
+	unsigned char * cdata;
+	int r;
+	lzo_uint length,clength;
 
-    if(argc != 3)
-        usage();
+        if (argc != 3)
+                usage();
 
-    in = open(argv[1], O_RDONLY);
+        in = open(argv[1], O_RDONLY);
 
-    if(in < 0) {
-        perror(argv[1]);
-        exit(1);
-    }
+        if (in < 0) {
+                perror(argv[1]);
+                exit(1);
+        }
 
-    out = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        out = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
-    if(out < 0) {
-        perror(argv[2]);
-        exit(1);
-    }
+        if (out < 0) {
+                perror(argv[2]);
+                exit(1);
+        }
 
-    length = lseek(in, 0, SEEK_END);
-    lseek(in, 0, SEEK_SET);
+        length = lseek(in, 0, SEEK_END);
+        lseek(in, 0, SEEK_SET);
 
-    data = malloc(length);
-    cdata = malloc(length+length/64 + 16 + 3);
+	data = malloc(length);
+	cdata = malloc(length+length/64 + 16 + 3);
 
-    read(in, data, length);
+	read(in, data, length);
 
-    if(lzo_init() != LZO_E_OK) {
-        printf("lzo_init() failed !!!\n");
-        exit(1);
-    }
-    
-    r = lzo1x_1_compress(data,length,cdata,&clength,wrkmem);
-    if(r == LZO_E_OK)
-        printf("compressed %lu bytes into %lu bytes\n",
-                (long) length, (long) clength);
-    else {
-        /* this should NEVER happen */
-        printf("internal error - compression failed: %d\n", r);
-        return 2;
-    }
+	if (lzo_init() != LZO_E_OK)
+        {
+                printf("lzo_init() failed !!!\n");
+                exit(1);
+        }
+	
+	r = lzo1x_1_compress(data,length,cdata,&clength,wrkmem);
+        if (r == LZO_E_OK)
+                printf("compressed %lu bytes into %lu bytes\n",
+		       (long) length, (long) clength);
+        else
+        {
+                /* this should NEVER happen */
+                printf("internal error - compression failed: %d\n", r);
+                return 2;
+        }
+        /* check for an incompressible block */
+        if (clength >= length)
+        {
+                printf("This block contains incompressible data.\n");
+                return 0;
+        }
 
-    /* check for an incompressible block */
-    if(clength >= length) {
-        printf("This block contains incompressible data.\n");
-        return 0;
-    }
+	write(out, cdata, clength);
 
-    write(out, cdata, clength);
-
-    close(in);
-    close(out);
-    exit(0);
+	close(in);
+	close(out);
+	exit(0);
 }
 
