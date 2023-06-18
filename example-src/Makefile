@@ -1,6 +1,6 @@
 include ../Makefile.cfg
 
-CC	= $(TARGETCC)
+CC		= $(TARGETCC)
 INCLUDE	= -I../target-inc
 CFLAGS	= $(TARGETCFLAGS)
 OBJCOPY	= $(TARGETOBJCOPY)
@@ -32,8 +32,8 @@ exception-test: $(OBJECTS) exception-test.o
 
 .PHONY : clean
 clean:
-	rm -f *.o console-test exception-test
+	-rm -f *.o console-test exception-test
 
 .PHONY : distclean
 distclean: clean 
-	rm -f *.bin
+	-rm -f *.bin

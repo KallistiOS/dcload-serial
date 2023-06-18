@@ -22,12 +22,11 @@ typedef _TIME_T_ time_t;
 #define __time_t_defined
 #endif
 
-struct timeb
-{
-  time_t time;
-  unsigned short millitm;
-  short timezone;
-  short dstflag;
+struct timeb {
+    time_t time;
+    unsigned short millitm;
+    short timezone;
+    short dstflag;
 };
 
 extern int ftime _PARAMS ((struct timeb *));

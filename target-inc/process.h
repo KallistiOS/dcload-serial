@@ -45,11 +45,11 @@ pid_t sexecvpe(void *, const char *path, const char * const *argv, const char * 
 
 int cwait(int *, int, int);
 
-#define _P_WAIT		1
-#define _P_NOWAIT	2	/* always generates error */
-#define _P_OVERLAY	3
-#define _P_NOWAITO	4
-#define _P_DETACH	5
+#define _P_WAIT    1
+#define _P_NOWAIT  2	/* always generates error */
+#define _P_OVERLAY 3
+#define _P_NOWAITO 4
+#define _P_DETACH  5
 
 #define WAIT_CHILD 1
 

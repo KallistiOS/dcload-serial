@@ -2,9 +2,9 @@ include ../../Makefile.cfg
 
 LZOPATH = ../../minilzo-2.10
 
-CC	= $(HOSTCC)
-CFLAGS	= $(HOSTCFLAGS)
-INCLUDE	= -I$(LZOPATH)
+CC	     = $(HOSTCC)
+CFLAGS	 = $(HOSTCFLAGS)
+INCLUDE	 = -I$(LZOPATH)
 LZOFILES = $(LZOPATH)/minilzo.c $(LZOPATH)/minilzo.h $(LZOPATH)/lzoconf.h
 
 .c.o:
@@ -20,8 +20,8 @@ minilzo.o: $(LZOFILES)
 
 .PHONY : clean
 clean:
-	rm -f *.o
+	-rm -f *.o
 
 .PHONY : distclean
 distclean: clean
-	rm -f lzo
+	-rm -f lzo

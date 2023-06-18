@@ -32,10 +32,9 @@
 
 static HEAP_ALLOC(wrkmem,LZO1X_1_MEM_COMPRESS);
 
-void usage(void)
-{
-        printf("usage: lzo <in> <out>\n");
-	exit(1);
+void usage(void) {
+    printf("usage: lzo <in> <out>\n");
+    exit(1);
 }
 
 int main(int argc, char *argv[])

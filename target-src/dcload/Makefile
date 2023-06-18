@@ -4,7 +4,7 @@ LZOPATH = ../../minilzo-2.10
 LZO	= ../../host-src/misc/lzo
 
 CC	= $(TARGETCC)
-CFLAGS	= $(TARGETCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DSERIALSPEED=$(SERIALSPEED)
+CFLAGS	= $(TARGETCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\"
 INCLUDE	= -I$(LZOPATH) -I../../target-inc
 
 OBJCOPY	= $(TARGETOBJCOPY)
@@ -46,8 +46,8 @@ minilzo.o: $(LZOFILES)
 
 .PHONY : clean
 clean:
-	rm -f $(DCLOBJECTS) $(EXCOBJECTS) dcload exception dcload.bin exception.bin
+	-rm -f $(DCLOBJECTS) $(EXCOBJECTS) dcload exception dcload.bin exception.bin
 
 .PHONY : distclean
 distclean: clean 
-	rm -f *.lzo
+	-rm -f *.lzo
