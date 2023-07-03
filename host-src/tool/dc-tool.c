@@ -665,9 +665,9 @@ void close_serial(void) {
 }
 
 int speedhack = 0;
-/* speedhack controls whether dcload will use N=12 (normal, 4.3% error) or
- * - N=13 (alternate, -3.1% error) for 115200
- * - N=6  (alternate, -2.8% error) for 230400
+/* speedhack controls whether dcload will use
+ * - N=13 (alternate, -3.0% error) instead of N=12 (normal, 4.3% error) for 115200
+ * - N=6  (alternate, -2.8% error) instead of N=5 (normal, 11.5% error) for 230400
  */
 
 /* use_extclk controls whether the DC's serial port will use an external clock */
