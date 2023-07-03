@@ -547,6 +547,11 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest) {
             speedsel = B500000;
             break;
 #endif
+#ifdef B230400
+        case 230400:
+            speedsel = B230400;
+            break;
+#endif
         case 115200:
             speedsel = B115200;
             break;
@@ -661,7 +666,8 @@ void close_serial(void) {
 
 int speedhack = 0;
 /* speedhack controls whether dcload will use N=12 (normal, 4.3% error) or
- * N=13 (alternate, -3.1% error) for 115200
+ * - N=13 (alternate, -3.1% error) for 115200
+ * - N=6  (alternate, -2.8% error) for 230400
  */
 
 /* use_extclk controls whether the DC's serial port will use an external clock */
@@ -677,6 +683,8 @@ int change_speed(char *device_name, unsigned int speed) {
 
     if(speedhack && (speed == 115200))
         send_uint(111600); /* get dcload to pick N=13 rather than N=12 */
+    else if(speedhack && (speed == 230400))
+        send_uint(223214); /* get dcload to pick N=6 rather than N=5 */
     else if(use_extclk)
         send_uint(0);
     else
@@ -744,7 +752,7 @@ void usage(void) {
     printf("-s <size>     Set size to <size>\n");
     printf("-t <device>   Use <device> to communicate with dc (default: %s)\n", SERIALDEVICE);
     printf("-b <baudrate> Use <baudrate> (default: %d)\n", DEFAULT_SPEED);
-    printf("-e            Try alternate 115200 (must also use -b 115200)\n");
+    printf("-e            Try alternate 115200/230400 (must also use -b 115200 or -b 230400)\n");
     printf("-E            Use an external clock for the DC's serial port\n");
     printf("-n            Do not attach console and fileserver\n");
     printf("-p            Use dumb terminal rather than console/fileserver\n");
@@ -1279,7 +1287,7 @@ int main(int argc, char *argv[]) {
         printf("Cdfs redirection enabled\n");
 
     if(speedhack)
-        printf("Alternate 115200 enabled\n");
+        printf("Alternate 115200/230400 enabled\n");
 
     if(use_extclk)
         printf("External clock usage enabled\n");
