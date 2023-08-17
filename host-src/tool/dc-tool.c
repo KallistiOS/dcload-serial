@@ -682,7 +682,7 @@ int change_speed(char *device_name, unsigned int speed) {
     blread(&c, 1);
 
     if(speedhack && (speed == 115200))
-        send_uint(111600); /* get dcload to pick N=13 rather than N=12 */
+        send_uint(111607); /* get dcload to pick N=13 rather than N=12 */
     else if(speedhack && (speed == 230400))
         send_uint(223214); /* get dcload to pick N=6 rather than N=5 */
     else if(use_extclk)
