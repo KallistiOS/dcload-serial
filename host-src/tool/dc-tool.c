@@ -512,70 +512,71 @@ void output_error(void) {
 }
 #endif
 
-/* setup serial port */
-int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest) {
-    *speedtest = speed;
 #ifndef _WIN32
-    struct termios newtio;
-    speed_t speedsel;
+void get_supported_speed (unsigned int *speed, speed_t *baudconst){
+    speed_t tmpbaud;
+    unsigned int tmpspeed = *speed;
 
-    dcfd = open(devicename, O_RDWR | O_NOCTTY);
-    if(dcfd < 0) {
-        perror(devicename);
-        exit(-1);
+    for (tmpbaud = B0; tmpbaud == B0;) {
+        switch(tmpspeed) {
+#ifdef B1500000
+        case 1500000:
+            tmpbaud = B1500000;
+            break;
+#endif
+#ifdef B500000
+        case 500000:
+            tmpbaud = B500000;
+            break;
+#endif
+#ifdef B230400
+        case 230400:
+            tmpbaud = B230400;
+            break;
+#endif
+#ifdef B115200
+        case 115200:
+            tmpbaud = B115200;
+            break;
+#endif
+#ifdef B57600
+        case 57600:
+            tmpbaud = B57600;
+            break;
+#endif
+        case 38400:
+            tmpbaud = B38400;
+            break;
+        case 19200:
+            tmpbaud = B19200;
+            break;
+        case 9600:
+            tmpbaud = B9600;
+            break;
+        default:
+            tmpspeed = (tmpspeed == INITIAL_SPEED ? 38400 : INITIAL_SPEED);
+            break;
+        }
     }
+    *baudconst = tmpbaud;
+    *speed = tmpspeed;
+}
+
+void set_io_speed (unsigned int speed, speed_t baudconst) {
+    struct termios newtio;
 
     tcgetattr(dcfd, &oldtio);	// save current serial port settings
-    memset(&newtio, 0, sizeof(newtio));	// clear struct for new port settings
 
+    memset(&newtio, 0, sizeof(newtio));	// clear struct for new port settings
     newtio.c_cflag = CRTSCTS | CS8 | CLOCAL | CREAD;
     newtio.c_iflag = IGNPAR;
     newtio.c_oflag = 0;
     newtio.c_lflag = 0;
     newtio.c_cc[VTIME] = 0;	// inter-character timer unused
     newtio.c_cc[VMIN] = 1;	// blocking read until 1 character arrives
-    
-    for(speedsel=0; !speedsel;) {
-        switch(speed) {
-#ifdef B1500000
-        case 1500000:
-            speedsel = B1500000;
-            break;
-#endif
-#ifdef B500000
-        case 500000:
-            speedsel = B500000;
-            break;
-#endif
-#ifdef B230400
-        case 230400:
-            speedsel = B230400;
-            break;
-#endif
-        case 115200:
-            speedsel = B115200;
-            break;
-        case 57600:
-            speedsel = B57600;
-            break;
-        case 38400:
-            speedsel = B38400;
-            break;
-        case 19200:
-            speedsel = B19200;
-            break;
-        case 9600:
-            speedsel = B9600;
-            break;
-        default:
-            printf("Unsupported baudrate (%d) - falling back to initial baudrate (%d)\n", speed, INITIAL_SPEED);
-            *speedtest = speed = INITIAL_SPEED;
-            break;
-        }
-    }
 
-    cfsetispeed(&newtio, speedsel);
-    cfsetospeed(&newtio, speedsel);
+    cfsetispeed(&newtio, baudconst);
+    cfsetospeed(&newtio, baudconst);
 
     // we don't error on these because it *may* still work
     if(tcflush(dcfd, TCIFLUSH) < 0) {
@@ -596,6 +597,29 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest) {
         }
     }
 #endif
+}
+#endif
+
+/* setup serial port */
+int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest) {
+    *speedtest = speed;
+#ifndef _WIN32
+    speed_t baudconst;
+
+    dcfd = open(devicename, O_RDWR | O_NOCTTY);
+    if(dcfd < 0) {
+        perror(devicename);
+        exit(-1);
+    }
+
+    oldspeed = speed;
+    get_supported_speed (&speed, &baudconst);
+    if (speed != oldspeed){
+        printf("Unsupported baudrate (%d) - falling back to baudrate (%d)\n", oldspeed, speed);
+        *speedtest = speed;
+    }
+
+    set_io_speed (speed, baudconst);
 
 #else
     BOOL fSuccess;
