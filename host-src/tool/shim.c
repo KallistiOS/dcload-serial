@@ -23,17 +23,18 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
-/* Detect MinGW/MSYS vs. MinGW-w64/MSYS2 */
 #ifdef __MINGW32__
 #include <_mingw.h>
+#include <windows.h>
+
+/* Detect MinGW/MSYS vs. MinGW-w64/MSYS2 */
 # ifdef __MINGW64_VERSION_MAJOR
 #  define __RT_MINGW_W64__
 # else
 #  define __RT_MINGW_ORG__
 # endif
-#endif /* __MINGW32__ */
 
-#ifdef __RT_MINGW_ORG__
+#endif /* __MINGW32__ */
 
 /*
  * Compatibility layer ('shim') for the original, legacy MinGW/MSYS environment.
@@ -45,6 +46,7 @@
  * Of course this will work if the compiler used on MinGW-w64/MSYS2 and
  * MinGW/MSYS are in the same family (e.g., GCC 9.x on both environments).
  */
+#ifdef __RT_MINGW_ORG__
 
 // See: https://github.com/mingw-w64/mingw-w64/blob/master/mingw-w64-crt/stdio/mingw_vasprintf.c
 int vasprintf(char ** __restrict__ ret,
