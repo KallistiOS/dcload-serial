@@ -46,7 +46,6 @@
  * MinGW/MSYS are in the same family (e.g., GCC 9.x on both environments).
  */
 
-// Thanks to Dietrich Epp
 // See: https://github.com/mingw-w64/mingw-w64/blob/master/mingw-w64-crt/stdio/mingw_vasprintf.c
 int vasprintf(char ** __restrict__ ret,
               const char * __restrict__ format,
