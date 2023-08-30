@@ -605,6 +605,7 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest) {
     *speedtest = speed;
 #ifndef _WIN32
     speed_t baudconst;
+    unsigned int oldspeed;
 
     dcfd = open(devicename, O_RDWR | O_NOCTTY);
     if(dcfd < 0) {
