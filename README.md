@@ -11,8 +11,8 @@ Dreamcast in order to run and debug them. To be used, you must have a way to
 connect your Dreamcast console to your computer, it can be one of the following:
 
 * A **Coders Cable** (a serial cable, the historical way to do that). It can be
-  a cable with the classical `RS-232`/`DE-9` connector or with the 
-  `FT232RL USB-Serial` module.
+  a cable with the classical `RS-232`/`DE-9` connector or with a 
+  `USB-Serial` module.
 * A **Broadband Adapter**, ref. `HIT-400`, often shortened as **BBA**, a 
   `10/100Mbits` Ethernet network card.
 * A **LAN Adapter**, ref. `HIT-300`, a `10Mbits` Ethernet network card.
@@ -95,32 +95,27 @@ To run a GNU debugger session over the **dcload** connection:
 * Tested systems: Debian GNU/Linux 2.2; Gentoo/Linux 2.6.7; Cygwin;
   Mac OSX 10.3.5 (Panther); macOS 10.15.2 (Catalina), MinGW/MSYS, 
   [DreamSDK](https://www.dreamsdk.org), MinGW-w64/MSYS2.
-* `1.56M` and `500K` baud now supported with the **FTDI USB-Serial** driver, 
-  including the driver built into macOS 10.12 and above.
-  **Note:** Works with the cheap and commonly available **FT232RL USB-Serial**
-  boards as well as the (outdated) **FT232BM USB-Serial** chip running at
-  `6.144Mhz`, e.g.:
-    - Linux:   `dc-tool-ser -t /dev/usb/tts/0 -b 1500000 -x <sh-executable>`
-    - Windows: `dc-tool-ser -t COM4 -b 500000 -x <sh-executable>`
-    - macOS:   `dc-tool-ser -t /dev/cu.usbserial-A50285BI -b 1500000 -x <sh-executable>`
+* To attain the highest speeds with `dcload-serial`, you need to select a `USB-Serial` module that matches the baudrates that the Dreamcast's SH-4 cpu can generate. Above `115200`, the SH-4 cpu generates the following baudrates: `223214`, `260416`, `312500`, `390625`, `520833`, `781250`, `1562500`. 
+  * **Silicon Labs CP2102N**-based chips have a good match with the SH-4, so you're pretty much guaranteed to attain the highest speed, `1562500`.
+  * **FTDI FT232***-based chips do no match the SH-4 baudrates closely enough, so `781250` will work, but `1.56M` will depend on your specific chip (ie, chip luck)
+* Examples of how to launch a program:
+  * Linux:   `dc-tool-ser -t /dev/usb/tts/0 -b 1500000 -x <sh-executable>`
+  * Windows: `dc-tool-ser -t COM4 -b 500000 -x <sh-executable>`
+  * macOS:   `dc-tool-ser -t /dev/cu.usbserial-A50285BI -b 1500000 -x <sh-executable>`
 * As of `1.0.4`, little-endian byte order is enforced in the host so dc-tool
   now runs on big-endian systems like a Mac.
 * As of `1.0.3`, serial speed is changed at runtime rather than compile time. 
 * `115200` works fine in most cases but `57600` baud is the standard baud.
   There is an `-e` option that will enable an alternate `115200` which may work
   better in some rare cases. Use this only if the regular `115200` is unstable.
+* `234000` will probably only work with the `-e` option enabled.
 * Patches and improvements are welcome.
 
 ## Modern macOS Notes
 
 * This was tested on **Catalina 10.15.2** only, however it should work on pretty
   much any version of macOS. 
-* Of course some sort of USB serial adapter must be used. The standard 
-  **FT232RL USB-Serial** boards from China that are sold pretty much everywhere
-  work great and are super cheap.
-* Modern macOS supports the same speeds as the other platforms, currently 
-  up to `1.56M` baud (`-b 1500000`). This was tested using Catalina and an 
-  **FT232RL**.
+* Modern macOS supports the same speeds as the other platforms.
 * Compilation on macOS requires `libelf`, which can be easily installed using
   the [Homebrew package manager](https://brew.sh): `brew install libelf`
 * The static compilation option cannot be used on macOS due to the way GCC

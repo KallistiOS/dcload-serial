@@ -33,11 +33,18 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #ifdef _WIN32
 #include <windows.h>
 #else
+#ifdef __linux__
+#include <asm/termbits.h>
+#include <sys/ioctl.h>
+#else
 #include <termios.h>
 #endif
+#endif
+
 #include <sys/time.h>
 #include <unistd.h>
 #include <utime.h>
@@ -220,7 +227,12 @@ int getopt(int nargc, char * const *nargv, const char *ostr) {
 extern char *optarg;
 #ifndef _WIN32
 int dcfd;
-struct termios oldtio;
+#ifdef BOTHER
+typedef struct termios2 termiosx_t ;
+#else
+typedef struct termios termiosx_t;
+#endif
+termiosx_t oldtio;
 #else
 HANDLE hCommPort;
 BOOL bDebugSocketStarted = FALSE;
@@ -517,6 +529,9 @@ void get_supported_speed (unsigned int *speed, speed_t *baudconst){
     speed_t tmpbaud;
     unsigned int tmpspeed = *speed;
 
+#ifdef BOTHER
+    *baudconst = BOTHER; //with BOTHER, any custom speed can be chosen
+#else
     for (tmpbaud = B0; tmpbaud == B0;) {
         switch(tmpspeed) {
 #ifdef B1500000
@@ -560,12 +575,37 @@ void get_supported_speed (unsigned int *speed, speed_t *baudconst){
     }
     *baudconst = tmpbaud;
     *speed = tmpspeed;
+#endif
+}
+
+void tc_close (int fd) {
+#ifndef BOTHER
+    tcflush(fd, TCIOFLUSH);
+#endif
+    close(fd);
+}
+
+int tc_get_attr(int fd, termiosx_t *tio) {
+#ifdef BOTHER
+    return ioctl(dcfd, TCGETS2, tio);
+#else
+    return tcgetattr(dcfd, tio);
+#endif
+}
+
+int tc_set_attr (int fd, termiosx_t *tio) {
+#ifdef BOTHER
+    return ioctl(fd, TCSETS2, tio);
+#else
+    tcflush(fd, TCIOFLUSH);
+	return tcsetattr(fd, TCSANOW, tio);
+#endif
 }
 
 void set_io_speed (unsigned int speed, speed_t baudconst) {
-    struct termios newtio;
+    termiosx_t newtio;
 
-    tcgetattr(dcfd, &oldtio);	// save current serial port settings
+    tc_get_attr(dcfd, &oldtio);	// save current serial port settings
 
     memset(&newtio, 0, sizeof(newtio));	// clear struct for new port settings
     newtio.c_cflag = CRTSCTS | CS8 | CLOCAL | CREAD;
@@ -575,16 +615,18 @@ void set_io_speed (unsigned int speed, speed_t baudconst) {
     newtio.c_cc[VTIME] = 0;	// inter-character timer unused
     newtio.c_cc[VMIN] = 1;	// blocking read until 1 character arrives
 
+#ifdef BOTHER
+	newtio.c_cflag |= BOTHER;
+    newtio.c_ospeed = speed;
+    newtio.c_cflag |= BOTHER << IBSHIFT;    
+    newtio.c_ispeed = speed;
+#else
     cfsetispeed(&newtio, baudconst);
     cfsetospeed(&newtio, baudconst);
+#endif
 
-    // we don't error on these because it *may* still work
-    if(tcflush(dcfd, TCIFLUSH) < 0) {
-        perror("tcflush");
-    }
-
-    if(tcsetattr(dcfd, TCSANOW, &newtio) < 0) {
-        perror("tcsetattr");
+    if(tc_set_attr(dcfd, &newtio) < 0) {
+        perror("tc_set_attr");
         printf("warning: your baud rate is likely set incorrectly\n");
     }
 
@@ -672,8 +714,7 @@ void finish_serial(void) {
 #ifdef _WIN32
     FlushFileBuffers(hCommPort);
 #else
-    tcflush(dcfd, TCIOFLUSH);
-    tcsetattr(dcfd, TCSANOW, &oldtio);
+    tc_set_attr(dcfd, &oldtio);
 #endif
     cleanup();
 }
@@ -684,8 +725,7 @@ void close_serial(void) {
     FlushFileBuffers(hCommPort);
     CloseHandle(hCommPort);
 #else
-    tcflush(dcfd, TCIOFLUSH);
-    close(dcfd);
+    tc_close(dcfd);
 #endif
 }
 
