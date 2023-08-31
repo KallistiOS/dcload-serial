@@ -616,7 +616,7 @@ void set_io_speed (unsigned int speed, speed_t baudconst) {
     newtio.c_cc[VMIN] = 1;	// blocking read until 1 character arrives
 
 #ifdef BOTHER
-	newtio.c_cflag |= BOTHER;
+    newtio.c_cflag |= BOTHER;
     newtio.c_ospeed = speed;
     newtio.c_cflag |= BOTHER << IBSHIFT;    
     newtio.c_ispeed = speed;
