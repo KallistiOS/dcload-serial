@@ -115,7 +115,12 @@ To run a GNU debugger session over the **dcload** connection:
 
 * This was tested on **Catalina 10.15.2** only, however it should work on pretty
   much any version of macOS. 
-* Modern macOS supports the same speeds as the other platforms.
+* Of course some sort of USB serial adapter must be used. The standard 
+  **FT232RL USB-Serial** boards from China that are sold pretty much everywhere
+  work great and are super cheap.
+* Modern macOS supports the same speeds as the other platforms, currently 
+  up to `1.56M` baud (`-b 1500000`). This was tested using Catalina and an 
+  **FT232RL**.
 * Compilation on macOS requires `libelf`, which can be easily installed using
   the [Homebrew package manager](https://brew.sh): `brew install libelf`
 * The static compilation option cannot be used on macOS due to the way GCC
