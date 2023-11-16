@@ -793,7 +793,7 @@ int open_gdb_socket(int port) {
 #else
     if( checkopt < 0 ) {
 #endif
-        log_error( "warning: failed to set gdb socket options" );
+        perror( "warning: failed to set gdb socket options" );
     }
     
     int checkbind = bind(gdb_server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr));
