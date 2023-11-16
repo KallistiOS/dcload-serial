@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/time.h>
 #include <unistd.h>
 #include <utime.h>
@@ -505,6 +506,11 @@ void dc_gdbpacket(void) {
 #ifdef __MINGW32__
     if(retval == SOCKET_ERROR) {
         fprintf(stderr, "Got socket error: %d\n", WSAGetLastError());
+        return;
+    }
+#else
+    if(retval == -1) {
+        fprintf(stderr, "Got socket error: %s\n", strerror(errno));
         return;
     }
 #endif
