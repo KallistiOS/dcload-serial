@@ -25,7 +25,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <errno.h>
 #include <sys/time.h>
+#include <time.h>
 #include <unistd.h>
 #include <utime.h>
 #include <dirent.h>
@@ -41,8 +43,7 @@
 #define O_BINARY 0
 #endif
 
-void dc_fstat(void)
-{
+void dc_fstat(void) {
     int filedes;
     struct stat filestat;
     int retval;
@@ -72,8 +73,7 @@ void dc_fstat(void)
     send_uint(retval);
 }
 
-void dc_write(void)
-{
+void dc_write(void) {
     int filedes;
     int retval;
     int count;
@@ -92,8 +92,7 @@ void dc_write(void)
     free(data);
 }
 
-void dc_read(void)
-{
+void dc_read(void) {
     int filedes;
     int retval;
     int count;
@@ -112,8 +111,7 @@ void dc_read(void)
     free(data);
 }
 
-void dc_open(void)
-{
+void dc_open(void) {
     int namelen;
     int retval;
     int flags;
@@ -132,28 +130,27 @@ void dc_open(void)
 
     /* translate flags */
 
-    if (flags & 0x0001)
+    if(flags & 0x0001)
         ourflags |= O_WRONLY;
-    if (flags & 0x0002)
+    if(flags & 0x0002)
         ourflags |= O_RDWR;
-    if (flags & 0x0008)
+    if(flags & 0x0008)
         ourflags |= O_APPEND;
-    if (flags & 0x0200)
+    if(flags & 0x0200)
         ourflags |= O_CREAT;
-    if (flags & 0x0400)
+    if(flags & 0x0400)
         ourflags |= O_TRUNC;
-    if (flags & 0x0800)
+    if(flags & 0x0800)
         ourflags |= O_EXCL;
 
-    retval = open(pathname, ourflags | O_BINARY, mode);
+    retval = open((const char *)pathname, ourflags | O_BINARY, mode);
 
     send_uint(retval);
 
     free(pathname);
 }
 
-void dc_close(void)
-{
+void dc_close(void) {
     int filedes;
     int retval;
 
@@ -164,8 +161,7 @@ void dc_close(void)
     send_uint(retval);
 }
 
-void dc_creat(void)
-{
+void dc_creat(void) {
     int namelen;
     unsigned char *pathname;
     int retval;
@@ -179,15 +175,14 @@ void dc_creat(void)
 
     mode = recv_uint();
 
-    retval = creat(pathname, mode);
+    retval = creat((const char *)pathname, mode);
 
     send_uint(retval);
 
     free(pathname);
 }
 
-void dc_link(void)
-{
+void dc_link(void) {
     int namelen1, namelen2;
     unsigned char *pathname1, *pathname2;
     int retval;
@@ -206,7 +201,7 @@ void dc_link(void)
     /* Copy the file on Windows */
     retval = CopyFileA(pathname1, pathname2, 0);
 #else
-    retval = link(pathname1, pathname2);
+    retval = link((const char *)pathname1, (const char *)pathname2);
 #endif
 
     send_uint(retval);
@@ -215,8 +210,7 @@ void dc_link(void)
     free(pathname2);
 }
 
-void dc_unlink(void)
-{
+void dc_unlink(void) {
     int namelen;
     unsigned char *pathname;
     int retval;
@@ -227,15 +221,14 @@ void dc_unlink(void)
 
     recv_data(pathname, namelen, 0);
 
-    retval = unlink(pathname);
+    retval = unlink((const char *)pathname);
 
     send_uint(retval);
 
     free(pathname);
 }
 
-void dc_chdir(void)
-{
+void dc_chdir(void) {
     int namelen;
     unsigned char *pathname;
     int retval;
@@ -246,15 +239,14 @@ void dc_chdir(void)
 
     recv_data(pathname, namelen, 0);
 
-    retval = chdir(pathname);
+    retval = chdir((const char *)pathname);
 
     send_uint(retval);
 
     free(pathname);
 }
 
-void dc_chmod(void)
-{
+void dc_chmod(void) {
     int namelen;
     int mode;
     unsigned char *pathname;
@@ -268,15 +260,14 @@ void dc_chmod(void)
 
     mode = recv_uint();
 
-    retval = chmod(pathname, mode);
+    retval = chmod((const char *)pathname, mode);
 
     send_uint(retval);
 
     free(pathname);
 }
 
-void dc_lseek(void)
-{
+void dc_lseek(void) {
     int filedes;
     int offset;
     int whence;
@@ -291,8 +282,7 @@ void dc_lseek(void)
     send_uint(retval);
 }
 
-void dc_time(void)
-{
+void dc_time(void) {
     time_t t;
 
     time(&t);
@@ -300,8 +290,7 @@ void dc_time(void)
     send_uint(t);
 }
 
-void dc_stat(void)
-{
+void dc_stat(void) {
     int namelen;
     unsigned char *filename;
     struct stat filestat;
@@ -313,7 +302,7 @@ void dc_stat(void)
 
     recv_data(filename, namelen, 0);
 
-    retval = stat(filename, &filestat);
+    retval = stat((const char *)filename, &filestat);
 
     send_uint(filestat.st_dev);
     send_uint(filestat.st_ino);
@@ -339,8 +328,7 @@ void dc_stat(void)
     free(filename);
 }
 
-void dc_utime(void)
-{
+void dc_utime(void) {
     unsigned char *pathname;
     int namelen;
     struct utimbuf tbuf;
@@ -355,13 +343,14 @@ void dc_utime(void)
 
     foo = recv_uint();
 
-    if (foo) {
+    if(foo) {
         tbuf.actime = recv_uint();
         tbuf.modtime = recv_uint();
 
-        retval = utime(pathname, &tbuf);
-    } else {
-        retval = utime(pathname, 0);
+        retval = utime((const char *)pathname, &tbuf);
+    } 
+    else {
+        retval = utime((const char *)pathname, 0);
     }
 
     send_uint(retval);
@@ -369,8 +358,7 @@ void dc_utime(void)
     free(pathname);
 }
 
-void dc_opendir(void)
-{
+void dc_opendir(void) {
     DIR *somedir;
     unsigned char *dirname;
     int namelen;
@@ -381,15 +369,14 @@ void dc_opendir(void)
 
     recv_data(dirname, namelen, 0);
 
-    somedir = opendir(dirname);
+    somedir = opendir((const char *)dirname);
 
     send_uint((unsigned int)somedir);
 
     free(dirname);
 }
 
-void dc_closedir(void)
-{
+void dc_closedir(void) {
     DIR *somedir;
     int retval;
 
@@ -400,8 +387,7 @@ void dc_closedir(void)
     send_uint(retval);
 }
 
-void dc_readdir(void)
-{
+void dc_readdir(void) {
     DIR *somedir;
     struct dirent *somedirent;
 
@@ -409,34 +395,35 @@ void dc_readdir(void)
 
     somedirent = readdir(somedir);
 
-    if (somedirent) {
-        send_uint(1);
-        send_uint(somedirent->d_ino);
+    if(!somedirent) {
+        send_uint(0);
+        return;
+    }
+        
+    send_uint(1);
+    send_uint(somedirent->d_ino);
 #ifdef _WIN32
-        send_uint(0);
-        send_uint(0);
-        send_uint(0);
+    send_uint(0);
+    send_uint(0);
+    send_uint(0);
 #else
 #ifdef __APPLE_CC__
-        send_uint(0);
+    send_uint(0);
 #else
 #if !defined(__FreeBSD__) && !defined(__CYGWIN__)
-        send_uint(somedirent->d_off);
+    send_uint(somedirent->d_off);
 #endif
 #endif
 #ifndef __CYGWIN__
-        send_uint(somedirent->d_reclen);
+    send_uint(somedirent->d_reclen);
 #endif
-        send_uint(somedirent->d_type);
+    send_uint(somedirent->d_type);
 #endif
-        send_uint(strlen(somedirent->d_name)+1);
-        send_data(somedirent->d_name, strlen(somedirent->d_name)+1, 0);
-    } else
-        send_uint(0);
+    send_uint(strlen(somedirent->d_name)+1);
+    send_data((unsigned char *)somedirent->d_name, strlen(somedirent->d_name)+1, 0);
 }
 
-void dc_rewinddir(void)
-{
+void dc_rewinddir(void) {
     DIR *somedir;
     int retval;
 
@@ -447,8 +434,7 @@ void dc_rewinddir(void)
     send_uint(0);
 }
 
-void dc_cdfs_redir_read_sectors(int isofd)
-{
+void dc_cdfs_redir_read_sectors(int isofd) {
     int start;
     int num;
     unsigned char * buf;
@@ -477,8 +463,7 @@ extern SOCKET gdb_server_socket;
 extern SOCKET socket_fd;
 #endif
 
-void dc_gdbpacket(void)
-{
+void dc_gdbpacket(void) {
     size_t in_size, out_size;
 
     static char gdb_buf[GDBBUFSIZE];
@@ -488,35 +473,35 @@ void dc_gdbpacket(void)
     in_size = recv_uint();
     out_size = recv_uint();
 
-    if (in_size)
+    if(in_size)
         recv_data(gdb_buf, in_size > GDBBUFSIZE ? GDBBUFSIZE : in_size, 0);
 
 #ifdef __MINGW32__
-    if (gdb_server_socket == INVALID_SOCKET) {
+    if(gdb_server_socket == INVALID_SOCKET) {
 #else
-    if (gdb_server_socket < 0) {
+    if(gdb_server_socket < 0) {
 #endif
         send_uint(-1);
         return;
     }
 
-    if (socket_fd == 0) {
-        printf( "waiting for gdb client connection...\n" );
-        socket_fd = accept( gdb_server_socket, NULL, NULL );
+    if(socket_fd == 0) {
+        printf("waiting for gdb client connection...\n");
+        socket_fd = accept(gdb_server_socket, NULL, NULL);
         
-        if (socket_fd == 0) {
+        if(socket_fd == 0) {
             perror("error accepting gdb server connection");
             send_uint(-1);
             return;
         }
     }
 
-    if (in_size)
+    if(in_size)
         send(socket_fd, gdb_buf, in_size, 0);
 
-    if (out_size) {
+    if(out_size) {
         retval = recv(socket_fd, gdb_buf, out_size > GDBBUFSIZE ? GDBBUFSIZE : out_size, 0);
-        if (retval == 0)
+        if(retval == 0)
             socket_fd = -1;
     }
 #ifdef __MINGW32__
@@ -524,8 +509,13 @@ void dc_gdbpacket(void)
         fprintf(stderr, "Got socket error: %d\n", WSAGetLastError());
         return;
     }
+#else
+    if(retval == -1) {
+        fprintf(stderr, "Got socket error: %s\n", strerror(errno));
+        return;
+    }
 #endif
     send_uint(retval);
-    if (retval > 0)
-        send_data(gdb_buf, retval, 0);
+    if(retval > 0)
+        send_data((unsigned char *)gdb_buf, retval, 0);
 }

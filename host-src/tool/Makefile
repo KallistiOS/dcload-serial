@@ -1,9 +1,10 @@
 include ../../Makefile.cfg
 
-LZOPATH = ../../minilzo.106
+LZOPATH = ../../minilzo-2.10
 
 CC		= $(HOSTCC)
-CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DBAUD_RATE=$(SERIALSPEED) -DSERIALDEVICE="\"$(SERIALDEVICE)\"" -DHAVE_GETOPT -DB1500000 -DB500000
+CFLAGS	= $(HOSTCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\" -DDEFAULT_SPEED=$(TOOL_DEFAULT_SPEED) -DSERIALDEVICE="\"$(SERIALDEVICE)\"" -DHAVE_GETOPT
+
 LDFLAGS = $(HOSTLDFLAGS)
 INCLUDE = -I$(LZOPATH) -I/usr/local/include
 
@@ -47,7 +48,7 @@ endif
 
 DCTOOL	= dc-tool-ser$(EXECUTABLEEXTENSION)
 
-OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o utils.o
+OBJECTS	= dc-tool.o minilzo.o syscalls.o unlink.o shim.o
 LZOFILES = $(LZOPATH)/minilzo.c $(LZOPATH)/minilzo.h $(LZOPATH)/lzoconf.h
 
 .c.o:
@@ -69,8 +70,8 @@ $(TOOLINSTALLDIR):
 
 .PHONY : clean
 clean:
-	rm -f $(OBJECTS)
+	-rm -f $(OBJECTS)
 
 .PHONY : distclean
 distclean: clean
-	rm -f $(DCTOOL)
+	-rm -f $(DCTOOL)

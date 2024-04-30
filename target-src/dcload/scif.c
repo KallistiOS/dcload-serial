@@ -24,29 +24,25 @@
 #define BORDER_FLASH
 #define VIDBORDER (volatile unsigned int *)0xa05f8040
 
-void scif_flush()
-{
+void scif_flush(void) {
     int v;
 
     *SCFSR2 &= 0xbf;
-    while (!((v = *SCFSR2) & 0x40));
+    while(!((v = *SCFSR2) & 0x40));
     *SCFSR2 = v & 0xbf;
 }
 
-void scif_init(int bps)
-{
+void scif_init(int bps) {
     /* Modified to allow external baudrate (bps == 0) */
-
     int i;
  
     *SCSCR2 = bps ? 0x0 : 0x02;	/* clear TE and RE bits / if (bps == 0) CKE1 on (bit 1) */
     *SCFCR2 = 0x6;		/* set TFRST and RFRST bits in SCFCR2 */
     *SCSMR2 = 0x0;		/* set data transfer format 8n1 */
    
-
-    if (bps) *SCBRR2 = (50 * 1000000) / (32 * bps) - 1;	/* if (bps != 0) set baudrate */
+    if(bps) *SCBRR2 = (50 * 1000000) / (32 * bps) - 1;	/* if (bps != 0) set baudrate */
  
-    for (i = 0; i < 100000; i++);	/* delay at least 1 bit interval */
+    for(i = 0; i < 100000; i++);	/* delay at least 1 bit interval */
  
     *SCFCR2 = 12;
     *SCFCR2 = 0x8;		/* set MCE in SCFCR2 */
@@ -55,11 +51,10 @@ void scif_init(int bps)
     *SCLSR2 = 0;
     *SCSCR2 = bps ? 0x30 : 0x32;	/* set TE and RE bits / if (bps == 0) CKE1 on (bit 1) */
  
-    for (i = 0; i < 100000; i++); 
+    for(i = 0; i < 100000; i++); 
 }
 
-unsigned char scif_getchar(void)
-{
+unsigned char scif_getchar(void) {
     unsigned char foo;
 
 #ifdef BORDER_FLASH
@@ -69,35 +64,31 @@ unsigned char scif_getchar(void)
     while (!(*SCFSR2 & 0x2));	/* check RDF */
     foo = *SCFRDR2;		/* read data */
     *SCFSR2 &= 0xfffd;		/* clear RDF */
-    return foo;
 
+    return foo;
 }
 
-unsigned int scif_isdata(void)
-{
+unsigned int scif_isdata(void) {
     return (*SCFSR2 & 0x2);
 }
 
-void scif_putchar(unsigned char foo)
-{
-
+void scif_putchar(unsigned char foo) {
 #ifdef BORDER_FLASH
     *VIDBORDER = ~(*VIDBORDER & 0x00ffffff);
 #endif
 
-    while (!(*SCFSR2 & 0x20));	/* check TDFE */
+    while(!(*SCFSR2 & 0x20));	/* check TDFE */
     *SCFTDR2 = foo;		/* send data */
     *SCFSR2 &= 0xff9f;		/* clear TDFE and TEND */
 }
 
-void scif_puts(unsigned char *foo)
-{
+void scif_puts(unsigned char *foo) {
     int i = 0;
 
-    while (foo[i] != 0) {
-	scif_putchar(foo[i]);
-	if (foo[i] == '\n')
-	    scif_putchar('\r');
-	i++;
+    while(foo[i] != 0) {
+        scif_putchar(foo[i]);
+        if (foo[i] == '\n')
+            scif_putchar('\r');
+        i++;
     }
 }

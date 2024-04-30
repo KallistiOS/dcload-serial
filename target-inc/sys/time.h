@@ -14,13 +14,13 @@ extern "C" {
 
 #ifndef _WINSOCK_H
 struct timeval {
-  long tv_sec;
-  long tv_usec;
+    long tv_sec;
+    long tv_usec;
 };
 
 struct timezone {
-  int tz_minuteswest;
-  int tz_dsttime;
+    int tz_minuteswest;
+    int tz_dsttime;
 };
 
 #ifdef __CYGWIN32__
@@ -33,9 +33,9 @@ struct timezone {
 #define ITIMER_VIRTUAL  1
 #define ITIMER_PROF     2
 
-struct  itimerval {
-  struct  timeval it_interval;
-  struct  timeval it_value;
+struct itimerval {
+    struct  timeval it_interval;
+    struct  timeval it_value;
 };
 
 int _EXFUN(gettimeofday, (struct timeval *__p, struct timezone *__z));
@@ -43,7 +43,7 @@ int _EXFUN(settimeofday, (const struct timeval *, const struct timezone *));
 int _EXFUN(utimes, (const char *__path, struct timeval *__tvp));
 int _EXFUN(getitimer, (int __which, struct itimerval *__value));
 int _EXFUN(setitimer, (int __which, const struct itimerval *__value,
-					struct itimerval *__ovalue));
+                    struct itimerval *__ovalue));
 
 #ifdef __cplusplus
 }
