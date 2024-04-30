@@ -238,13 +238,13 @@ DIR * opendir(const char *name)
     scif_putchar(16);
     put_uint(namelen);
     send_data_block_compressed(name, namelen);
-    return(get_uint());
+    return((DIR *)get_uint());
 }
 
 int closedir(DIR *dir)
 {
     scif_putchar(17);
-    put_uint(dir);
+    put_uint((unsigned int)dir);
     return(get_uint());
 }
 
@@ -255,7 +255,7 @@ struct dirent *readdir(DIR *dir)
 
     scif_putchar(18);
 
-    put_uint(dir);
+    put_uint((unsigned int)dir);
 
     if (get_uint()) {
 	ourdirent.d_ino = get_uint();
@@ -293,6 +293,6 @@ size_t gdbpacket(const char *in_buf, unsigned int size_pack, char* out_buf)
 int rewinddir(DIR *dir)
 {
 	scif_putchar(21);
-	put_uint(dir);
+	put_uint((unsigned int)dir);
 	return(get_uint());
 }

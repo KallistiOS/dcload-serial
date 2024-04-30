@@ -1,5 +1,8 @@
 #include "dcload-syscall.h"
 
+/* Prototyped from crt0.S */
+extern void __exit(int status);
+
 int link (const char *oldpath, const char *newpath)
 {
     if (*DCLOADMAGICADDR == DCLOADMAGICVALUE)

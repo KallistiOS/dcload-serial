@@ -19,6 +19,7 @@
  *
  */
 
+#include <string.h>
 #include "scif.h"
 #include "minilzo.h"
 #include "video.h"
