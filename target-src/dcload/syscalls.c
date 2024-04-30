@@ -239,7 +239,7 @@ DIR * opendir(const char *name) {
 int closedir(DIR *dir) {
     scif_putchar(17);
     put_uint((unsigned int)dir);
-  
+
     return(get_uint());
 }
 
