@@ -232,7 +232,7 @@ DIR * opendir(const char *name) {
     scif_putchar(16);
     put_uint(namelen);
     send_data_block_compressed((unsigned char*)name, namelen);
-    
+
     return((DIR *)get_uint());
 }
 
