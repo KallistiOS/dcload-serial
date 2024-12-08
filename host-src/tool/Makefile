@@ -24,11 +24,11 @@ ifeq ($(WITH_BFD),1)
   ifneq ("$(wildcard $(TARGETPREFIX)/lib/libsframe.a)","")
     LIBSFRAME = -lsframe
   endif
-  
+
   CFLAGS	+= -DWITH_BFD
   LDFLAGS	+= -L$(BFDLIB) -lbfd $(LIBSFRAME) -liberty -lintl
   INCLUDE	+= -I$(BFDINCLUDE)
-  
+
   ZLIB_REQUIRED := 1
 else
   LDFLAGS	+= -L$(ELFLIB) -lelf
@@ -60,7 +60,7 @@ $(DCTOOL): $(OBJECTS)
 	$(CC) -o $@ $(OBJECTS) $(LDFLAGS)
 
 minilzo.o: $(LZOFILES)
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
 .PHONY : install
 install: $(DCTOOL) | $(TOOLINSTALLDIR)
