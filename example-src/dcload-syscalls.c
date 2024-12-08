@@ -1,5 +1,9 @@
 #include "dcload-syscall.h"
 
+#include <sys/stat.h>
+
+extern void __exit(int status);
+
 int link(const char *oldpath, const char *newpath) {
     if(*DCLOADMAGICADDR == DCLOADMAGICVALUE)
         return dcloadsyscall(pclinknr, oldpath, newpath);
@@ -63,11 +67,13 @@ int unlink(const char *path) {
         return -1;
 }
 
-void exit(int status) {
+void __attribute__((noreturn)) exit(int status) {
     if(*DCLOADMAGICADDR == DCLOADMAGICVALUE)
         dcloadsyscall(pcexitnr);
 
     __exit(status);
+    /* Ensure function never returns */
+    for(;;) {}
 }
 
 int stat(const char *path, struct stat *st) {
@@ -77,7 +83,7 @@ int stat(const char *path, struct stat *st) {
         return -1;
 }
 
-int chmod(const char *path, short mode) {
+int chmod(const char *path, unsigned int mode) {
     if(*DCLOADMAGICADDR == DCLOADMAGICVALUE)
         return dcloadsyscall(pcchmodnr, path, mode);
     else

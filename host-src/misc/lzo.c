@@ -1,4 +1,4 @@
-/* 
+/*
  * This file is part of the dcload Dreamcast serial loader
  *
  * Andrew Kieschnick <andrewk@napalm-x.com>
@@ -19,84 +19,77 @@
  *
  */
 
+#include "minilzo.h"
+#include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <sys/types.h>
 #include <unistd.h>
-#include "minilzo.h"
 
-#define HEAP_ALLOC(var,size) \
-        long __LZO_MMODEL var [ ((size) + (sizeof(long) - 1)) / sizeof(long) ]
+#define HEAP_ALLOC(var, size) long __LZO_MMODEL var[((size) + (sizeof(long) - 1)) / sizeof(long)]
 
-static HEAP_ALLOC(wrkmem,LZO1X_1_MEM_COMPRESS);
+static HEAP_ALLOC(wrkmem, LZO1X_1_MEM_COMPRESS);
 
 void usage(void) {
     printf("usage: lzo <in> <out>\n");
     exit(1);
 }
 
-int main(int argc, char *argv[])
-{
-        int in, out;
-	unsigned char * data;
-	unsigned char * cdata;
-	int r;
-	lzo_uint length,clength;
+int main(int argc, char *argv[]) {
+    int in, out;
+    unsigned char *data;
+    unsigned char *cdata;
+    int r;
+    lzo_uint length, clength;
 
-        if (argc != 3)
-                usage();
+    if(argc != 3)
+        usage();
 
-        in = open(argv[1], O_RDONLY);
+    in = open(argv[1], O_RDONLY);
 
-        if (in < 0) {
-                perror(argv[1]);
-                exit(1);
-        }
+    if(in < 0) {
+        perror(argv[1]);
+        exit(1);
+    }
 
-        out = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    out = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
 
-        if (out < 0) {
-                perror(argv[2]);
-                exit(1);
-        }
+    if(out < 0) {
+        perror(argv[2]);
+        exit(1);
+    }
 
-        length = lseek(in, 0, SEEK_END);
-        lseek(in, 0, SEEK_SET);
+    length = lseek(in, 0, SEEK_END);
+    lseek(in, 0, SEEK_SET);
 
-	data = malloc(length);
-	cdata = malloc(length+length/64 + 16 + 3);
+    data = malloc(length);
+    cdata = malloc(length + length / 64 + 16 + 3);
 
-	read(in, data, length);
+    read(in, data, length);
 
-	if (lzo_init() != LZO_E_OK)
-        {
-                printf("lzo_init() failed !!!\n");
-                exit(1);
-        }
-	
-	r = lzo1x_1_compress(data,length,cdata,&clength,wrkmem);
-        if (r == LZO_E_OK)
-                printf("compressed %lu bytes into %lu bytes\n",
-		       (long) length, (long) clength);
-        else
-        {
-                /* this should NEVER happen */
-                printf("internal error - compression failed: %d\n", r);
-                return 2;
-        }
-        /* check for an incompressible block */
-        if (clength >= length)
-        {
-                printf("This block contains incompressible data.\n");
-                return 0;
-        }
+    if(lzo_init() != LZO_E_OK) {
+        printf("lzo_init() failed !!!\n");
+        exit(1);
+    }
 
-	write(out, cdata, clength);
+    r = lzo1x_1_compress(data, length, cdata, &clength, wrkmem);
+    if(r == LZO_E_OK)
+        printf("compressed %lu bytes into %lu bytes\n", (long)length, (long)clength);
+    else {
+        /* this should NEVER happen */
+        printf("internal error - compression failed: %d\n", r);
+        return 2;
+    }
+    /* check for an incompressible block */
+    if(clength >= length) {
+        printf("This block contains incompressible data.\n");
+        return 0;
+    }
 
-	close(in);
-	close(out);
-	exit(0);
+    write(out, cdata, clength);
+
+    close(in);
+    close(out);
+    exit(0);
 }
-

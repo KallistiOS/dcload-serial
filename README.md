@@ -1,4 +1,4 @@
-# dcload-serial 1.0.6
+# dcload-serial 1.0.6-hostfix1
 
 **dcload** is a **Sega Dreamcast** (DC) serial loader written originally by 
 [Andrew Kieschnick](http://napalm-x.thegypsy.com/andrewk/dc/), a.k.a.
@@ -143,3 +143,6 @@ To run a GNU debugger session over the **dcload** connection:
 * Fixes for `libbfd` segfaults by **Atani**.
 * Tons of improvements and fixes by [SiZiOUS](https://sizious.com).
 * Modern macOS testing by [Ben Baron a.k.a. einsteinx2](https://twitter.com/einsteinx2).
+* Bugfixes, rewinddir, custom baud rates for macOS and code sanitization
+  backported from KOSU fork by [andressbarajas](https://github.com/andressbarajas).
+

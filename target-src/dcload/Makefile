@@ -4,7 +4,7 @@ LZOPATH = ../../minilzo-2.10
 LZO	= ../../host-src/misc/lzo
 
 CC	= $(TARGETCC)
-CFLAGS	= $(TARGETCFLAGS) -DDCLOAD_VERSION=\"$(VERSION)\"
+CFLAGS	= $(TARGETCFLAGS) -Wno-builtin-declaration-mismatch -DDCLOAD_VERSION=\"$(VERSION)\"
 INCLUDE	= -I$(LZOPATH) -I../../target-inc
 
 OBJCOPY	= $(TARGETOBJCOPY)
@@ -15,16 +15,16 @@ EXCOBJECTS	= exception.o
 LZOFILES = $(LZOPATH)/minilzo.c $(LZOPATH)/minilzo.h $(LZOPATH)/lzoconf.h
 
 .c.o:
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 .s.o:
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 .S.o:
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
 all: dcload.lzo exception.lzo
 
 dcload.lzo: dcload.bin
-	$(LZO) $< $@	
+	$(LZO) $< $@
 
 dcload.bin: dcload
 	$(OBJCOPY) -R .stack -O binary $< $@
@@ -33,21 +33,21 @@ dcload: $(DCLOBJECTS)
 	$(CC) $(CFLAGS) -Wl,-Tdcload.x -nostartfiles -nostdlib $^ -o $@ -lgcc
 
 exception.lzo: exception.bin
-	$(LZO) $< $@	
+	$(LZO) $< $@
 
 exception.bin: exception
-	$(OBJCOPY) -O binary $< $@	
+	$(OBJCOPY) -O binary $< $@
 
 exception: $(EXCOBJECTS)
 	$(CC) $(CFLAGS) -Wl,-Ttext=0x8c00f400 -nostartfiles -nostdlib $^ -o $@
 
 minilzo.o: $(LZOFILES)
-	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $< 
+	$(CC) $(CFLAGS) $(INCLUDE) -o $@ -c $<
 
 .PHONY : clean
 clean:
 	-rm -f $(DCLOBJECTS) $(EXCOBJECTS) dcload exception dcload.bin exception.bin
 
 .PHONY : distclean
-distclean: clean 
+distclean: clean
 	-rm -f *.lzo

@@ -20,19 +20,19 @@
  */
 
 #include "config.h"
- 
+
 #ifdef WITH_BFD
 #include <bfd.h>
 #else
 #include <libelf.h>
 #endif
 
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 #ifdef _WIN32
 #include <windows.h>
@@ -61,9 +61,9 @@
 #ifdef __FreeBSD__
 #include <netinet/in.h>
 #endif
+#include "dc-io.h"
 #include "minilzo.h"
 #include "syscalls.h"
-#include "dc-io.h"
 
 int _nl_msg_cat_cntr;
 
@@ -73,18 +73,18 @@ int gdb_socket_started = 0;
 int gdb_server_socket = -1;
 int socket_fd = 0;
 #else
-/* Winsock SOCKET is defined as an unsigned int, so -1 won't work here */	
+/* Winsock SOCKET is defined as an unsigned int, so -1 won't work here */
 SOCKET gdb_server_socket = 0;
-SOCKET socket_fd = 0;	
+SOCKET socket_fd = 0;
 #endif
 
-#define INITIAL_SPEED  57600
+#define INITIAL_SPEED 57600
 
-#define DCLOADBUFFER	16384 /* was 8192 */
+#define DCLOADBUFFER 16384 /* was 8192 */
 #ifdef _WIN32
-#define DATA_BITS	8
-#define PARITY_SET	NOPARITY
-#define STOP_BITS	ONESTOPBIT
+#define DATA_BITS 8
+#define PARITY_SET NOPARITY
+#define STOP_BITS ONESTOPBIT
 #endif
 
 #define VERSION PACKAGE_VERSION
@@ -93,8 +93,7 @@ SOCKET socket_fd = 0;
 #define O_BINARY 0
 #endif
 
-#define HEAP_ALLOC(var,size) \
-        long __LZO_MMODEL var [ ((size) + (sizeof(long) - 1)) / sizeof(long) ]
+#define HEAP_ALLOC(var, size) long __LZO_MMODEL var[((size) + (sizeof(long) - 1)) / sizeof(long)]
 
 static HEAP_ALLOC(wrkmem, LZO1X_1_MEM_COMPRESS);
 
@@ -137,67 +136,65 @@ static HEAP_ALLOC(wrkmem, LZO1X_1_MEM_COMPRESS);
  * SUCH DAMAGE.
  */
 
-int     opterr = 1,             /* if error message should be printed */
-        optind = 1,             /* index into parent argv vector */
-        optopt,                 /* character checked for validity */
-        optreset;               /* reset getopt */
-char    *optarg;                /* argument associated with option */
+int opterr = 1, /* if error message should be printed */
+    optind = 1, /* index into parent argv vector */
+    optopt,     /* character checked for validity */
+    optreset;   /* reset getopt */
+char *optarg;   /* argument associated with option */
 
-#define BADCH   (int)'?'
-#define BADARG  (int)':'
-#define EMSG    ""
+#define BADCH (int)'?'
+#define BADARG (int)':'
+#define EMSG ""
 
-char *__progname=PACKAGE;
+char *__progname = PACKAGE;
 
 /*
  * getopt --
  *      Parse argc/argv argument vector.
  */
-int getopt(int nargc, char * const *nargv, const char *ostr) {
+int getopt(int nargc, char *const *nargv, const char *ostr) {
     extern char *__progname;
-    static char *place = EMSG;              /* option letter processing */
-    char *oli;                              /* option letter list index */
+    static char *place = EMSG; /* option letter processing */
+    char *oli;                 /* option letter list index */
     int ret;
 
-    if(optreset || !*place) {              /* update scanning pointer */
+    if(optreset || !*place) { /* update scanning pointer */
         optreset = 0;
         if(optind >= nargc || *(place = nargv[optind]) != '-') {
             place = EMSG;
             return (-1);
         }
-        if(place[1] && *++place == '-') {      /* found "--" */
+        if(place[1] && *++place == '-') { /* found "--" */
             ++optind;
             place = EMSG;
             return (-1);
         }
     }
-    
+
     /* option letter okay? */
-    if((optopt = (int)*place++) == (int)':' ||
-      !(oli = strchr(ostr, optopt))) {
+    if((optopt = (int)*place++) == (int)':' || !(oli = strchr(ostr, optopt))) {
         /*
-        * if the user didn't specify '-' as an option,
-        * assume it means -1.
-        */
+         * if the user didn't specify '-' as an option,
+         * assume it means -1.
+         */
         if(optopt == (int)'-')
             return (-1);
         if(!*place)
             ++optind;
         if(opterr && *ostr != ':')
-            (void)fprintf(stderr,
-                "%s: illegal option -- %c\n", __progname, optopt);
+            (void)fprintf(stderr, "%s: illegal option -- %c\n", __progname, optopt);
 
         return (BADCH);
     }
-    if(*++oli != ':') {                /* don't need argument */
+    if(*++oli != ':') { /* don't need argument */
         optarg = NULL;
         if(!*place)
             ++optind;
     }
-    else {                              /* need an argument */
-        if(*place)                     /* no white space */
+    else {       /* need an argument */
+        if(*place) /* no white space */
             optarg = place;
-        else if(nargc <= ++optind) {   /* no arg */
+        else if(nargc <= ++optind) { /* no arg */
             place = EMSG;
             if(*ostr == ':')
                 ret = BADARG;
@@ -205,20 +202,18 @@ int getopt(int nargc, char * const *nargv, const char *ostr) {
                 ret = BADCH;
 
             if(opterr)
-                (void)fprintf(stderr,
-                  "%s: option requires an argument -- %c\n",
-                  __progname, optopt);
+                (void)fprintf(stderr, "%s: option requires an argument -- %c\n", __progname,
+                              optopt);
 
             return (ret);
-        }
-        else                              /* white space */
+        } else /* white space */
             optarg = nargv[optind];
 
         place = EMSG;
         ++optind;
     }
 
-    return (optopt);                       /* dump back option letter */
+    return (optopt); /* dump back option letter */
 }
 #else
 #include <unistd.h>
@@ -228,7 +223,7 @@ extern char *optarg;
 #ifndef _WIN32
 int dcfd;
 #ifdef BOTHER
-typedef struct termios2 termiosx_t ;
+typedef struct termios2 termiosx_t;
 #else
 typedef struct termios termiosx_t;
 #endif
@@ -243,12 +238,12 @@ void cleanup(void) {
         return;
 
     gdb_socket_started = 0;
-    
+
     // Send SIGTERM to the GDB Client, telling remote DC program has ended
     char gdb_buf[16];
-    strcpy(gdb_buf, "+$X0f#ee\0");		
-    
-#ifdef __MINGW32__		
+    strcpy(gdb_buf, "+$X0f#ee\0");
+
+#ifdef __MINGW32__
     send(socket_fd, gdb_buf, strlen(gdb_buf), 0);
     sleep(1);
     closesocket(socket_fd);
@@ -269,7 +264,7 @@ int serial_read(void *buffer, int count) {
     fSuccess = ReadFile(hCommPort, buffer, count, (DWORD *)&count, NULL);
     if(!fSuccess)
         return -1;
-        
+
     return count;
 }
 
@@ -294,17 +289,11 @@ int serial_putc(char ch) {
     return count;
 }
 #else
-int serial_read(void *buffer, int count) {
-    return read(dcfd,buffer,count);
-}
+int serial_read(void *buffer, int count) { return read(dcfd, buffer, count); }
 
-int serial_write(void *buffer, int count) {
-    return write(dcfd,buffer,count);
-}
+int serial_write(void *buffer, int count) { return write(dcfd, buffer, count); }
 
-int serial_putc(char ch) {
-    return write(dcfd,&ch,1);
-}
+int serial_putc(char ch) { return write(dcfd, &ch, 1); }
 #endif
 
 /* read count bytes from dc into buf */
@@ -347,10 +336,10 @@ int send_uint(unsigned int value) {
     serial_putc((char)((tmp >> 0x18) & 0xFF));
 
     /* get little-endian */
-    tmp =  ((unsigned int) (serial_getc() & 0xFF));
-    tmp |= ((unsigned int) (serial_getc() & 0xFF) << 0x08);
-    tmp |= ((unsigned int) (serial_getc() & 0xFF) << 0x10);
-    tmp |= ((unsigned int) (serial_getc() & 0xFF) << 0x18);
+    tmp = ((unsigned int)(serial_getc() & 0xFF));
+    tmp |= ((unsigned int)(serial_getc() & 0xFF) << 0x08);
+    tmp |= ((unsigned int)(serial_getc() & 0xFF) << 0x10);
+    tmp |= ((unsigned int)(serial_getc() & 0xFF) << 0x18);
 
     if(tmp != value)
         return 0;
@@ -363,10 +352,10 @@ unsigned int recv_uint(void) {
     unsigned int tmp;
 
     /* get little-endian */
-    tmp =  ((unsigned int) (serial_getc() & 0xFF));
-    tmp |= ((unsigned int) (serial_getc() & 0xFF) << 0x08);
-    tmp |= ((unsigned int) (serial_getc() & 0xFF) << 0x10);
-    tmp |= ((unsigned int) (serial_getc() & 0xFF) << 0x18);
+    tmp = ((unsigned int)(serial_getc() & 0xFF));
+    tmp |= ((unsigned int)(serial_getc() & 0xFF) << 0x08);
+    tmp |= ((unsigned int)(serial_getc() & 0xFF) << 0x10);
+    tmp |= ((unsigned int)(serial_getc() & 0xFF) << 0x18);
 
     return (tmp);
 }
@@ -387,8 +376,8 @@ void recv_data(void *data, unsigned int total, unsigned int verbose) {
 
         size = recv_uint();
 
-        switch (type) {
-        case 'U':		// uncompressed
+        switch(type) {
+        case 'U': // uncompressed
             if(verbose) {
                 printf("U");
                 fflush(stdout);
@@ -400,7 +389,7 @@ void recv_data(void *data, unsigned int total, unsigned int verbose) {
             total -= size;
             data += size;
             break;
-        case 'C':		// compressed
+        case 'C': // compressed
             if(verbose) {
                 printf("C");
                 fflush(stdout);
@@ -413,7 +402,8 @@ void recv_data(void *data, unsigned int total, unsigned int verbose) {
                 serial_write(&ok, 1);
                 total -= newsize;
                 data += newsize;
-            } else {
+            }
+            else {
                 ok = 'B';
                 serial_write(&ok, 1);
                 printf("\nrecv_data: decompression failed!\n");
@@ -432,15 +422,15 @@ void recv_data(void *data, unsigned int total, unsigned int verbose) {
 }
 
 /* send size bytes to dc from addr */
-void send_data(unsigned char * addr, unsigned int size, unsigned int verbose) {
+void send_data(unsigned char *addr, unsigned int size, unsigned int verbose) {
     unsigned int i;
-    unsigned char *location = (unsigned char *) addr;
+    unsigned char *location = (unsigned char *)addr;
     unsigned char sum = 0;
     unsigned char data;
     lzo_uint csize;
     unsigned int sendsize;
     unsigned char c;
-    unsigned char * buffer;
+    unsigned char *buffer;
 
     buffer = malloc(DCLOADBUFFER + DCLOADBUFFER / 64 + 16 + 3);
 
@@ -454,7 +444,7 @@ void send_data(unsigned char * addr, unsigned int size, unsigned int verbose) {
             sendsize = DCLOADBUFFER;
         else
             sendsize = size;
-            
+
         lzo1x_1_compress((unsigned char *)addr, sendsize, buffer, &csize, wrkmem);
 
         if(csize < sendsize) {
@@ -478,7 +468,8 @@ void send_data(unsigned char * addr, unsigned int size, unsigned int verbose) {
                 serial_write(&sum, 1);
                 blread(&data, 1);
             }
-        } else {
+        }
+        else {
             // send uncompressed
             if(verbose) {
                 printf("U");
@@ -489,13 +480,13 @@ void send_data(unsigned char * addr, unsigned int size, unsigned int verbose) {
             send_uint(sendsize);
             serial_write((unsigned char *)addr, sendsize);
             sum = 0;
-            for (i = 0; i < sendsize; i++) {
+            for(i = 0; i < sendsize; i++) {
                 sum ^= ((unsigned char *)addr)[i];
             }
             serial_write(&sum, 1);
             blread(&data, 1);
         }
-        
+
         size -= sendsize;
         addr += sendsize;
     }
@@ -511,28 +502,37 @@ void output_error(void) {
     char *lpMsgBuf;
 
     FormatMessage(
-    FORMAT_MESSAGE_ALLOCATE_BUFFER |
-    FORMAT_MESSAGE_FROM_SYSTEM |
-    FORMAT_MESSAGE_IGNORE_INSERTS,
-    NULL,
-    GetLastError(),
-    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
-    (LPTSTR) &lpMsgBuf, 0, NULL // Process any inserts in lpMsgBuf.
+        FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+        NULL, GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), // Default language
+        (LPTSTR)&lpMsgBuf, 0, NULL // Process any inserts in lpMsgBuf.
     );
-    printf("%s\n",(char *)lpMsgBuf);
-    LocalFree((LPVOID) lpMsgBuf);
+    printf("%s\n", (char *)lpMsgBuf);
+    LocalFree((LPVOID)lpMsgBuf);
 }
 #endif
 
 #ifndef _WIN32
-void get_supported_speed (unsigned int *speed, speed_t *baudconst){
+
+void get_supported_speed(unsigned int *speed, speed_t *baudconst) {
     speed_t tmpbaud;
     unsigned int tmpspeed = *speed;
 
 #ifdef BOTHER
-    *baudconst = BOTHER; //with BOTHER, any custom speed can be chosen
+    /*
+       Use the BOTHER constant to enable custom baud rates.
+       This allows specifying any arbitrary speed via the `c_ispeed` and `c_ospeed` fields
+       in the extended termios2 structure (Linux-specific).
+    */
+    *baudconst = BOTHER;
+#elif __APPLE__
+    /*
+       On macOS, set an initial baud rate (e.g., B115200) as a placeholder.
+       The actual custom speed will be configured later using `ioctl(IOSSIOSPEED)`.
+       This is required because macOS handles custom baud rates differently.
+     */
+    *baudconst = B115200;
 #else
-    for (tmpbaud = B0; tmpbaud == B0;) {
+    for(tmpbaud = B0; tmpbaud == B0;) {
         switch(tmpspeed) {
 #ifdef B1500000
         case 1500000:
@@ -578,7 +578,7 @@ void get_supported_speed (unsigned int *speed, speed_t *baudconst){
 #endif
 }
 
-void tc_close (int fd) {
+void tc_close(int fd) {
 #ifndef BOTHER
     tcflush(fd, TCIOFLUSH);
 #endif
@@ -587,38 +587,38 @@ void tc_close (int fd) {
 
 int tc_get_attr(int fd, termiosx_t *tio) {
 #ifdef BOTHER
-    return ioctl(dcfd, TCGETS2, tio);
+    return ioctl(fd, TCGETS2, tio);
 #else
-    return tcgetattr(dcfd, tio);
+    return tcgetattr(fd, tio);
 #endif
 }
 
-int tc_set_attr (int fd, termiosx_t *tio) {
+int tc_set_attr(int fd, termiosx_t *tio) {
 #ifdef BOTHER
     return ioctl(fd, TCSETS2, tio);
 #else
     tcflush(fd, TCIOFLUSH);
-	return tcsetattr(fd, TCSANOW, tio);
+    return tcsetattr(fd, TCSANOW, tio);
 #endif
 }
 
-void set_io_speed (unsigned int speed, speed_t baudconst) {
+void set_io_speed(unsigned int speed, speed_t baudconst) {
     termiosx_t newtio;
 
-    tc_get_attr(dcfd, &oldtio);	// save current serial port settings
+    tc_get_attr(dcfd, &oldtio); // save current serial port settings
 
-    memset(&newtio, 0, sizeof(newtio));	// clear struct for new port settings
+    memset(&newtio, 0, sizeof(newtio)); // clear struct for new port settings
     newtio.c_cflag = CRTSCTS | CS8 | CLOCAL | CREAD;
     newtio.c_iflag = IGNPAR;
     newtio.c_oflag = 0;
     newtio.c_lflag = 0;
-    newtio.c_cc[VTIME] = 0;	// inter-character timer unused
-    newtio.c_cc[VMIN] = 1;	// blocking read until 1 character arrives
+    newtio.c_cc[VTIME] = 0; // inter-character timer unused
+    newtio.c_cc[VMIN] = 1;  // blocking read until 1 character arrives
 
 #ifdef BOTHER
     newtio.c_cflag |= BOTHER;
     newtio.c_ospeed = speed;
-    newtio.c_cflag |= BOTHER << IBSHIFT;    
+    newtio.c_cflag |= BOTHER << IBSHIFT;
     newtio.c_ispeed = speed;
 #else
     cfsetispeed(&newtio, baudconst);
@@ -631,19 +631,16 @@ void set_io_speed (unsigned int speed, speed_t baudconst) {
     }
 
 #ifdef __APPLE__
-    if(speed > 115200) {
-        /* Necessary to call ioctl to set non-standard speeds (aka higher than 115200) */
-        if(ioctl(dcfd, IOSSIOSPEED, &speed) < 0) {
-            perror("IOSSIOSPEED");
-            printf("warning: your baud rate is likely set incorrectly\n");
-        }
+    if(ioctl(dcfd, IOSSIOSPEED, &speed) < 0) {
+        perror("IOSSIOSPEED");
+        printf("warning: your baud rate is likely set incorrectly\n");
     }
 #endif
 }
-#endif
+#endif /* #ifndef _WIN32 */
 
 /* setup serial port */
-int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest) {
+int open_serial(const char *devicename, unsigned int speed, unsigned int *speedtest) {
     *speedtest = speed;
 #ifndef _WIN32
     speed_t baudconst;
@@ -656,13 +653,13 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest) {
     }
 
     oldspeed = speed;
-    get_supported_speed (&speed, &baudconst);
-    if (speed != oldspeed){
+    get_supported_speed(&speed, &baudconst);
+    if(speed != oldspeed) {
         printf("Unsupported baudrate (%d) - falling back to baudrate (%d)\n", oldspeed, speed);
         *speedtest = speed;
     }
 
-    set_io_speed (speed, baudconst);
+    set_io_speed(speed, baudconst);
 
 #else
     BOOL fSuccess;
@@ -670,8 +667,8 @@ int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest) {
     DCB dcbCommPort;
 
     /* Setup the com port */
-    hCommPort = CreateFile(devicename, GENERIC_READ | GENERIC_WRITE, 0,
-               NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, 0);
+    hCommPort = CreateFile(devicename, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING,
+                           FILE_ATTRIBUTE_NORMAL, 0);
 
     if(hCommPort == INVALID_HANDLE_VALUE) {
         printf("*Error opening com port\n");
@@ -754,13 +751,13 @@ int change_speed(char *device_name, unsigned int speed) {
         send_uint(0);
     else
         send_uint(speed);
-        
+
     printf("Changing speed to %d bps... ", speed);
     close_serial();
 
-    if(open_serial(device_name, speed, &dummy)<0)
+    if(open_serial(device_name, speed, &dummy) < 0)
         return 1;
-        
+
     send_uint(rv);
     rv = recv_uint();
     printf("done\n");
@@ -786,17 +783,17 @@ int open_gdb_socket(int port) {
     }
 
     const int enable_reuse_addr = 1;
-    int checkopt = setsockopt(gdb_server_socket, SOL_SOCKET, SO_REUSEADDR,
-                              &enable_reuse_addr, sizeof(enable_reuse_addr));
+    int checkopt = setsockopt(gdb_server_socket, SOL_SOCKET, SO_REUSEADDR, &enable_reuse_addr,
+                              sizeof(enable_reuse_addr));
 #ifdef __MINGW32__
-    if( checkopt == SOCKET_ERROR ) {
+    if(checkopt == SOCKET_ERROR) {
 #else
-    if( checkopt < 0 ) {
+    if(checkopt < 0) {
 #endif
-        perror( "warning: failed to set gdb socket options" );
+        perror("warning: failed to set gdb socket options");
     }
-    
-    int checkbind = bind(gdb_server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr));
+
+    int checkbind = bind(gdb_server_socket, (struct sockaddr *)&server_addr, sizeof(server_addr));
 #ifdef __MINGW32__
     if(checkbind == SOCKET_ERROR) {
 #else
@@ -840,7 +837,7 @@ void usage(void) {
     printf("-g            Start a GDB server\n");
     printf("-h            Usage information (you\'re looking at it)\n\n");
     cleanup();
-    
+
     exit(0);
 }
 
@@ -849,12 +846,12 @@ void usage(void) {
 int start_ws() {
     WSADATA wsaData;
     int failed = 0;
-    failed = WSAStartup(MAKEWORD(2,2), &wsaData);
+    failed = WSAStartup(MAKEWORD(2, 2), &wsaData);
     if(failed != NO_ERROR) {
         perror("WSAStartup");
         return 1;
     }
-    
+
     return 0;
 }
 #endif
@@ -977,8 +974,7 @@ unsigned int upload(unsigned char *filename, unsigned int address) {
             if(!data->d_buf || !data->d_size)
                 continue;
 
-            printf("Section %s, lma 0x%x, size %d\n", section_name,
-                   shdr->sh_addr, shdr->sh_size);
+            printf("Section %s, lma 0x%x, size %d\n", section_name, shdr->sh_addr, shdr->sh_size);
             size += shdr->sh_size;
 
             c = 'B';
@@ -996,7 +992,8 @@ unsigned int upload(unsigned char *filename, unsigned int address) {
         elf_end(elf);
         close(inputfd);
         goto done_transfer;
-     } else {
+    }
+    else {
         elf_end(elf);
         close(inputfd);
     }
@@ -1036,15 +1033,15 @@ done_transfer:
     stime = starttime.tv_sec + starttime.tv_usec / 1000000.0;
     etime = endtime.tv_sec + endtime.tv_usec / 1000000.0;
 
-    printf("effective: %.2f bytes / sec\n", (double) size / (etime - stime));
+    printf("effective: %.2f bytes / sec\n", (double)size / (etime - stime));
     printf("%.2f seconds to transfer %d bytes\n", (etime - stime), size);
     fflush(stdout);
 
     return address;
 }
 
-void download(unsigned char *filename, unsigned int address,
-          unsigned int size, unsigned int quiet) {
+void download(unsigned char *filename, unsigned int address, unsigned int size,
+              unsigned int quiet) {
     int outputfd;
 
     unsigned char c;
@@ -1080,7 +1077,7 @@ void download(unsigned char *filename, unsigned int address,
     stime = starttime.tv_sec + starttime.tv_usec / 1000000.0;
     etime = endtime.tv_sec + endtime.tv_usec / 1000000.0;
 
-    printf("effective: %.2f bytes / sec\n", (double) size / (etime - stime));
+    printf("effective: %.2f bytes / sec\n", (double)size / (etime - stime));
     printf("%.2f seconds to transfer %d bytes\n", (etime - stime), size);
     fflush(stdout);
 
@@ -1092,7 +1089,7 @@ void download(unsigned char *filename, unsigned int address,
 void execute(unsigned int address, unsigned int console) {
     unsigned char c;
 
-    printf("Sending execute command (0x%x, console=%d)...",address,console);
+    printf("Sending execute command (0x%x, console=%d)...", address, console);
 
     serial_write("A", 1);
     serial_read(&c, 1);
@@ -1123,80 +1120,80 @@ void do_console(unsigned char *path, unsigned char *isofile) {
         fflush(stdout);
         serial_read(&command, 1);
 
-        switch (command) {
-            case 0:
-                finish_serial();
-                exit(0);
-                break;
-            case 1:
-                dc_fstat();
-                break;
-            case 2:
-                dc_write();
-                break;
-            case 3:
-                dc_read();
-                break;
-            case 4:
-                dc_open();
-                break;
-            case 5:
-                dc_close();
-                break;
-            case 6:
-                dc_creat();
-                break;
-            case 7:
-                dc_link();
-                break;
-            case 8:
-                dc_unlink();
-                break;
-            case 9:
-                dc_chdir();
-                break;
-            case 10:
-                dc_chmod();
-                break;
-            case 11:
-                dc_lseek();
-                break;
-            case 12:
-                dc_time();
-                break;
-            case 13:
-                dc_stat();
-                break;
-            case 14:
-                dc_utime();
-                break;
-            case 15:
-                printf("command 15 should not happen... (but it did)\n");
-                break;
-            case 16:
-                dc_opendir();
-                break;
-            case 17:
-                dc_closedir();
-                break;
-            case 18:
-                dc_readdir();
-                break;
-            case 19:
-                dc_cdfs_redir_read_sectors(isofd);
-                break;
-            case 20:
-                dc_gdbpacket();
-                break;
-            case 21:
-                dc_rewinddir();
-                break;
-            default:
-                printf("Unimplemented command (%d) \n", command);
-                printf("Assuming program has exited, or something...\n");
-                finish_serial();
-                exit(0);
-                break;
+        switch(command) {
+        case 0:
+            finish_serial();
+            exit(0);
+            break;
+        case 1:
+            dc_fstat();
+            break;
+        case 2:
+            dc_write();
+            break;
+        case 3:
+            dc_read();
+            break;
+        case 4:
+            dc_open();
+            break;
+        case 5:
+            dc_close();
+            break;
+        case 6:
+            dc_creat();
+            break;
+        case 7:
+            dc_link();
+            break;
+        case 8:
+            dc_unlink();
+            break;
+        case 9:
+            dc_chdir();
+            break;
+        case 10:
+            dc_chmod();
+            break;
+        case 11:
+            dc_lseek();
+            break;
+        case 12:
+            dc_time();
+            break;
+        case 13:
+            dc_stat();
+            break;
+        case 14:
+            dc_utime();
+            break;
+        case 15:
+            printf("command 15 should not happen... (but it did)\n");
+            break;
+        case 16:
+            dc_opendir();
+            break;
+        case 17:
+            dc_closedir();
+            break;
+        case 18:
+            dc_readdir();
+            break;
+        case 19:
+            dc_cdfs_redir_read_sectors(isofd);
+            break;
+        case 20:
+            dc_gdbpacket();
+            break;
+        case 21:
+            dc_rewinddir();
+            break;
+        default:
+            printf("Unimplemented command (%d) \n", command);
+            printf("Assuming program has exited, or something...\n");
+            finish_serial();
+            exit(0);
+            break;
         }
     }
 
@@ -1225,9 +1222,9 @@ void do_dumbterm(void) {
 }
 
 #ifdef __MINGW32__
-#define AVAILABLE_OPTIONS 		"x:u:d:a:s:t:b:i:npqheEg"
+#define AVAILABLE_OPTIONS "x:u:d:a:s:t:b:i:npqheEg"
 #else
-#define AVAILABLE_OPTIONS		"x:u:d:a:s:t:b:c:i:npqheEg"
+#define AVAILABLE_OPTIONS "x:u:d:a:s:t:b:c:i:npqheEg"
 #endif
 
 int main(int argc, char *argv[]) {
@@ -1250,88 +1247,88 @@ int main(int argc, char *argv[]) {
 
     someopt = getopt(argc, argv, AVAILABLE_OPTIONS);
     while(someopt > 0) {
-        switch (someopt) {
-            case 'x':
-                if(command) {
-                    printf("You can only specify one of -x, -u, and -d\n");
-                    exit(0);
-                }
-                command = 'x';
-                filename = malloc(strlen(optarg) + 1);
-                strcpy((char *)filename, optarg);
-                break;
-            case 'u':
-                if(command) {
-                    printf("You can only specify one of -x, -u, and -d\n");
-                    exit(0);
-                }
-                command = 'u';
-                filename = malloc(strlen(optarg) + 1);
-                strcpy((char *)filename, optarg);
-                break;
-            case 'd':
-                if(command) {
-                    printf("You can only specify one of -x, -u, and -d\n");
-                    exit(0);
-                }
-                command = 'd';
-                filename = malloc(strlen(optarg) + 1);
-                strcpy((char *)filename, optarg);
-                break;
+        switch(someopt) {
+        case 'x':
+            if(command) {
+                printf("You can only specify one of -x, -u, and -d\n");
+                exit(0);
+            }
+            command = 'x';
+            filename = malloc(strlen(optarg) + 1);
+            strcpy((char *)filename, optarg);
+            break;
+        case 'u':
+            if(command) {
+                printf("You can only specify one of -x, -u, and -d\n");
+                exit(0);
+            }
+            command = 'u';
+            filename = malloc(strlen(optarg) + 1);
+            strcpy((char *)filename, optarg);
+            break;
+        case 'd':
+            if(command) {
+                printf("You can only specify one of -x, -u, and -d\n");
+                exit(0);
+            }
+            command = 'd';
+            filename = malloc(strlen(optarg) + 1);
+            strcpy((char *)filename, optarg);
+            break;
 #ifndef __MINGW32__
-            case 'c':
-                path = malloc(strlen(optarg) + 1);
-                strcpy((char *)path, optarg);
-                break;
+        case 'c':
+            path = malloc(strlen(optarg) + 1);
+            strcpy((char *)path, optarg);
+            break;
 #endif
-            case 'i':
-                cdfs_redir = 1;
-                isofile = malloc(strlen(optarg) + 1);
-                strcpy((char *)isofile, optarg);
-                break;
-            case 'a':
-                address = strtoul(optarg, NULL, 0);
-                break;
-            case 's':
-                size = strtoul(optarg, NULL, 0);
-                break;
-            case 't':
-                device_name = malloc(strlen(optarg) + 1);
-                strcpy(device_name, optarg);
-                break;
-            case 'b':
-                speed = strtoul(optarg, NULL, 0);
-                break;
-            case 'n':
-                console = 0;
-                break;
-            case 'p':
-                console = 0;
-                dumbterm = 1;
-                break;
-            case 'q':
-                quiet = 1;
-                break;
-            case 'h':
-                usage();
-                break;
-            case 'e':
-                speedhack = 1;
-                break;
-            case 'E':
-                use_extclk = 1;
-                break;
-            case 'g':
-                printf("Starting a GDB server on port 2159\n");		
+        case 'i':
+            cdfs_redir = 1;
+            isofile = malloc(strlen(optarg) + 1);
+            strcpy((char *)isofile, optarg);
+            break;
+        case 'a':
+            address = strtoul(optarg, NULL, 0);
+            break;
+        case 's':
+            size = strtoul(optarg, NULL, 0);
+            break;
+        case 't':
+            device_name = malloc(strlen(optarg) + 1);
+            strcpy(device_name, optarg);
+            break;
+        case 'b':
+            speed = strtoul(optarg, NULL, 0);
+            break;
+        case 'n':
+            console = 0;
+            break;
+        case 'p':
+            console = 0;
+            dumbterm = 1;
+            break;
+        case 'q':
+            quiet = 1;
+            break;
+        case 'h':
+            usage();
+            break;
+        case 'e':
+            speedhack = 1;
+            break;
+        case 'E':
+            use_extclk = 1;
+            break;
+        case 'g':
+            printf("Starting a GDB server on port 2159\n");
 #ifdef __MINGW32__
-                if(start_ws())
-                    return -1;		
+            if(start_ws())
+                return -1;
 #endif
-                open_gdb_socket(2159);
-                gdb_socket_started = 1;
-                break;
-            default:
-                break;
+            open_gdb_socket(2159);
+            gdb_socket_started = 1;
+            break;
+        default:
+            break;
         }
 
         someopt = getopt(argc, argv, AVAILABLE_OPTIONS);
@@ -1362,64 +1359,65 @@ int main(int argc, char *argv[]) {
     if(cdfs_redir)
         printf("Cdfs redirection enabled\n");
 
-    if(speedhack)
+    if(speedhack && (speed == 115200 || speed == 230400))
         printf("Alternate 115200/230400 enabled\n");
 
     if(use_extclk)
         printf("External clock usage enabled\n");
 
-    /* test for resonable baud - this is for POSIX systems */
-    if (speed != INITIAL_SPEED) {
-        if (open_serial(device_name, speed, &speed)<0)
+#ifndef __APPLE__
+    /* test for reasonable baud - this is for POSIX systems */
+    if(speed != INITIAL_SPEED) {
+        if(open_serial(device_name, speed, &speed) < 0)
             return 1;
         close_serial();
     }
-  
-    if (open_serial(device_name, INITIAL_SPEED, &dummy)<0)
+#endif
+
+    if(open_serial(device_name, INITIAL_SPEED, &dummy) < 0)
         return 1;
 
-    if (speed != INITIAL_SPEED)
+    if(speed != INITIAL_SPEED)
         change_speed(device_name, speed);
 
-    switch (command) {
-        case 'x':
-            if(cdfs_redir) {
-                unsigned char c;
-                c = 'H';
-                serial_write(&c, 1);
-                blread(&c, 1);
-            }
-            printf("Upload <%s>\n", filename);
-            address = upload(filename, address);
-            printf("Executing at <0x%x>\n", address);
-            execute(address, console);
-            if(console)
-                do_console(path, isofile);
-            else if(dumbterm)
-                do_dumbterm();
-            break;
-        case 'u':
-            printf("Upload <%s> at <0x%x>\n", filename, address);
-            upload(filename, address);
-            change_speed(device_name, INITIAL_SPEED);
-            break;
-        case 'd':
-            if(!size) {
-                printf("You must specify a size (-s <size>) with download (-d <filename>)\n");
-                cleanup();
-                exit(0);
-            }
-            printf("Download %d bytes at <0x%x> to <%s>\n", size, address,
-                filename);
-            download(filename, address, size, quiet);
-            change_speed(device_name, INITIAL_SPEED);
-            break;
-        default:
-            if(dumbterm)
-                do_dumbterm();
-            else
-                usage();
-            break;
+    switch(command) {
+    case 'x':
+        if(cdfs_redir) {
+            unsigned char c;
+            c = 'H';
+            serial_write(&c, 1);
+            blread(&c, 1);
+        }
+        printf("Upload <%s>\n", filename);
+        address = upload(filename, address);
+        printf("Executing at <0x%x>\n", address);
+        execute(address, console);
+        if(console)
+            do_console(path, isofile);
+        else if(dumbterm)
+            do_dumbterm();
+        break;
+    case 'u':
+        printf("Upload <%s> at <0x%x>\n", filename, address);
+        upload(filename, address);
+        change_speed(device_name, INITIAL_SPEED);
+        break;
+    case 'd':
+        if(!size) {
+            printf("You must specify a size (-s <size>) with download (-d <filename>)\n");
+            cleanup();
+            exit(0);
+        }
+        printf("Download %d bytes at <0x%x> to <%s>\n", size, address, filename);
+        download(filename, address, size, quiet);
+        change_speed(device_name, INITIAL_SPEED);
+        break;
+    default:
+        if(dumbterm)
+            do_dumbterm();
+        else
+            usage();
+        break;
     }
 
     cleanup();

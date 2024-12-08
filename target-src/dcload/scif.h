@@ -1,4 +1,4 @@
-/* 
+/*
  * This file is part of the dcload Dreamcast serial loader
  *
  * Copyright (C) 2001 Andrew Kieschnick <andrewk@napalm-x.com>
@@ -23,34 +23,34 @@
 #define __SCIF_H__
 
 /* serial mode register */
-#define SCSMR2  (volatile unsigned short *) 0xffe80000
+#define SCSMR2  (volatile unsigned short *)0xffe80000
 
 /* bit rate register */
-#define SCBRR2  (volatile unsigned char *)  0xffe80004
+#define SCBRR2  (volatile unsigned char *)0xffe80004
 
 /* serial control register */
-#define SCSCR2  (volatile unsigned short *) 0xffe80008
+#define SCSCR2  (volatile unsigned short *)0xffe80008
 
 /* transmit fifo data register */
-#define SCFTDR2 (volatile unsigned char *)  0xffe8000c
+#define SCFTDR2 (volatile unsigned char *)0xffe8000c
 
 /* serial status register */
-#define SCFSR2  (volatile unsigned short *) 0xffe80010
+#define SCFSR2  (volatile unsigned short *)0xffe80010
 
 /* receive fifo data register */
-#define SCFRDR2 (volatile unsigned char *)  0xffe80014
+#define SCFRDR2 (volatile unsigned char *)0xffe80014
 
 /* fifo control register */
-#define SCFCR2  (volatile unsigned short *) 0xffe80018
+#define SCFCR2  (volatile unsigned short *)0xffe80018
 
 /* fifo data count register */
-#define SCFDR2  (volatile unsigned short *) 0xffe8001c
+#define SCFDR2  (volatile unsigned short *)0xffe8001c
 
 /* serial port register */
-#define SCSPTR2 (volatile unsigned short *) 0xffe80020
+#define SCSPTR2 (volatile unsigned short *)0xffe80020
 
 /* line status register */
-#define SCLSR2  (volatile unsigned short *) 0xffe80024
+#define SCLSR2  (volatile unsigned short *)0xffe80024
 
 void scif_flush(void);
 void scif_init(int bps);

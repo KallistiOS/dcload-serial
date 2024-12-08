@@ -20,6 +20,7 @@
  */
 
 #include <unistd.h>
+#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -28,10 +29,8 @@
 #include <dirent.h>
 #include "scif.h"
 
-extern void load_data_block_general(unsigned char *addr,
-                           unsigned int size, unsigned int verbose);
-extern unsigned int send_data_block_compressed(unsigned char * addr,
-                           unsigned int size);
+extern void load_data_block_general(unsigned char *addr, unsigned int size, unsigned int verbose);
+extern unsigned int send_data_block_compressed(unsigned char *addr, unsigned int size);
 extern unsigned int get_uint(void);
 
 extern int put_uint(unsigned int val);
@@ -62,7 +61,7 @@ int write(int fd, const void *buf, size_t count) {
     scif_putchar(2);
     put_uint(fd);
     put_uint(count);
-    send_data_block_compressed((unsigned char*)buf, count);
+    send_data_block_compressed((unsigned char *)buf, count);
 
     return (get_uint());
 }
@@ -74,7 +73,7 @@ int open(const char *pathname, int flags, ...) {
     va_start(ap, flags);
     scif_putchar(4);
     put_uint(namelen);
-    send_data_block_compressed((unsigned char*)pathname, namelen);
+    send_data_block_compressed((unsigned char *)pathname, namelen);
     put_uint(flags);
     put_uint(va_arg(ap, int));
     va_end(ap);
@@ -94,7 +93,7 @@ int creat(const char *pathname, mode_t mode) {
 
     scif_putchar(6);
     put_uint(namelen);
-    send_data_block_compressed((unsigned char*)pathname, namelen);
+    send_data_block_compressed((unsigned char *)pathname, namelen);
     put_uint(mode);
 
     return (get_uint());
@@ -106,9 +105,9 @@ int link(const char *oldpath, const char *newpath) {
 
     scif_putchar(7);
     put_uint(namelen1);
-    send_data_block_compressed((unsigned char*)oldpath, namelen1);
+    send_data_block_compressed((unsigned char *)oldpath, namelen1);
     put_uint(namelen2);
-    send_data_block_compressed((unsigned char*)newpath, namelen2);
+    send_data_block_compressed((unsigned char *)newpath, namelen2);
 
     return (get_uint());
 }
@@ -118,7 +117,7 @@ int unlink(const char *pathname) {
 
     scif_putchar(8);
     put_uint(namelen);
-    send_data_block_compressed((unsigned char*)pathname, namelen);
+    send_data_block_compressed((unsigned char *)pathname, namelen);
 
     return (get_uint());
 }
@@ -128,7 +127,7 @@ int chdir(const char *path) {
 
     scif_putchar(9);
     put_uint(namelen);
-    send_data_block_compressed((unsigned char*)path, namelen);
+    send_data_block_compressed((unsigned char *)path, namelen);
 
     return (get_uint());
 }
@@ -138,7 +137,7 @@ int chmod(const char *path, mode_t mode) {
 
     scif_putchar(10);
     put_uint(namelen);
-    send_data_block_compressed((unsigned char*)path, namelen);
+    send_data_block_compressed((unsigned char *)path, namelen);
     put_uint(mode);
 
     return (get_uint());
@@ -174,7 +173,7 @@ int fstat(int filedes, struct stat *buf) {
     return (get_uint());
 }
 
-time_t time(time_t * t) {
+time_t time(time_t *t) {
     scif_putchar(12);
 
     if(t) {
@@ -190,7 +189,7 @@ int stat(const char *file_name, struct stat *buf) {
 
     scif_putchar(13);
     put_uint(namelen);
-    send_data_block_compressed((unsigned char*)file_name, namelen);
+    send_data_block_compressed((unsigned char *)file_name, namelen);
 
     buf->st_dev = get_uint();
     buf->st_ino = get_uint();
@@ -214,7 +213,7 @@ int utime(const char *filename, struct utimbuf *buf) {
 
     scif_putchar(14);
     put_uint(namelen);
-    send_data_block_compressed((unsigned char*)filename, namelen);
+    send_data_block_compressed((unsigned char *)filename, namelen);
     if(buf) {
         put_uint(1);
         put_uint(buf->actime);
@@ -226,21 +225,21 @@ int utime(const char *filename, struct utimbuf *buf) {
     return (get_uint());
 }
 
-DIR * opendir(const char *name) {
+DIR *opendir(const char *name) {
     int namelen = strlen(name) + 1;
 
     scif_putchar(16);
     put_uint(namelen);
-    send_data_block_compressed((unsigned char*)name, namelen);
-    
-    return((DIR *)get_uint());
+    send_data_block_compressed((unsigned char *)name, namelen);
+
+    return ((DIR *)get_uint());
 }
 
 int closedir(DIR *dir) {
     scif_putchar(17);
     put_uint((unsigned int)dir);
 
-    return(get_uint());
+    return (get_uint());
 }
 
 struct dirent *readdir(DIR *dir) {
@@ -260,12 +259,12 @@ struct dirent *readdir(DIR *dir) {
         load_data_block_general(ourdirent.d_name, namelen, 0);
 
         return &ourdirent;
-    } else
-
-    return 0;
+    }
+    else
+        return 0;
 }
 
-size_t gdbpacket(const char *in_buf, unsigned int size_pack, char* out_buf) {
+size_t gdbpacket(const char *in_buf, unsigned int size_pack, char *out_buf) {
     size_t in_size = size_pack >> 16, out_size = size_pack & 0xffff, ret_size;
 
     scif_putchar(20);
@@ -274,7 +273,7 @@ size_t gdbpacket(const char *in_buf, unsigned int size_pack, char* out_buf) {
     put_uint((unsigned int)out_size);
 
     if(in_size)
-        send_data_block_compressed((unsigned char*)in_buf, in_size);
+        send_data_block_compressed((unsigned char *)in_buf, in_size);
 
     ret_size = get_uint();
 
@@ -288,5 +287,5 @@ int rewinddir(DIR *dir) {
     scif_putchar(21);
     put_uint((unsigned int)dir);
 
-    return(get_uint());
+    return (get_uint());
 }

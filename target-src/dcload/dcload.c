@@ -1,4 +1,4 @@
-/* 
+/*
  * dcload, a Dreamcast serial loader
  *
  * Copyright (C) 2001 Andrew Kieschnick <andrewk@napalm-x.com>
@@ -19,15 +19,15 @@
  *
  */
 
-#include "scif.h"
 #include "minilzo.h"
+#include "scif.h"
 #include "video.h"
 
 #include <string.h>
 
 #define NAME "dcload-serial " DCLOAD_VERSION
 
-#define INITIAL_SPEED   57600
+#define INITIAL_SPEED 57600
 
 #define VIDMODEREG (volatile unsigned int *)0xa05f8044
 #define VIDBORDER (volatile unsigned int *)0xa05f8040
@@ -39,54 +39,52 @@ extern void cdfs_redir_disable(void);
 extern void cdfs_redir_enable(void);
 
 /* buffer for storing compressed data (16384 + 16384 / 64 + 16 + 3 bytes) */
-unsigned char *buffer = (unsigned char *) 0x8c009f6c;
+unsigned char *buffer = (unsigned char *)0x8c009f6c;
 
 /* work memory for compressing data (65536 bytes) */
 unsigned char *wrkmem = 0;
 
-#define BOOTED        1
-#define NOT_BOOTED   -1
-#define IS(a)        ((a) == BOOTED)
-#define IS_NOT(a)    ((a) == NOT_BOOTED)
+#define BOOTED 1
+#define NOT_BOOTED -1
+#define IS(a) ((a) == BOOTED)
+#define IS_NOT(a) ((a) == NOT_BOOTED)
 unsigned int booted = NOT_BOOTED;
 
-void assign_wrkmem(unsigned char *user_buffer) {
-    wrkmem = user_buffer;
-}
+void assign_wrkmem(unsigned char *user_buffer) { wrkmem = user_buffer; }
 
 /* converts expevt value to description, used by exception handler */
-unsigned char * exception_code_to_string(unsigned int expevt) {
+unsigned char *exception_code_to_string(unsigned int expevt) {
     switch(expevt) {
-        case 0x1e0:
-            return "User break";
-        case 0x0e0:
-            return "Address error (read)";
-        case 0x040:
-            return "TLB miss exception (read)";
-        case 0x0a0:
-            return "TLB protection violation exception (read)";
-        case 0x180:
-            return "General illegal instruction exception";
-        case 0x1a0:
-            return "Slot illegal instruction exception";
-        case 0x800:
-            return "General FPU disable exception";
-        case 0x820:
-            return "Slot FPU disable exception";
-        case 0x100:
-            return "Address error (write)";
-        case 0x060:
-            return "TLB miss exception (write)";
-        case 0x0c0:
-            return "TLB protection violation exception (write)";
-        case 0x120:
-            return "FPU exception";
-        case 0x080:
-            return "Initial page write exception";
-        case 0x160:
-            return "Unconditional trap (TRAPA)";
-        default:
-            return "Unknown exception";
+    case 0x1e0:
+        return "User break";
+    case 0x0e0:
+        return "Address error (read)";
+    case 0x040:
+        return "TLB miss exception (read)";
+    case 0x0a0:
+        return "TLB protection violation exception (read)";
+    case 0x180:
+        return "General illegal instruction exception";
+    case 0x1a0:
+        return "Slot illegal instruction exception";
+    case 0x800:
+        return "General FPU disable exception";
+    case 0x820:
+        return "Slot FPU disable exception";
+    case 0x100:
+        return "Address error (write)";
+    case 0x060:
+        return "TLB miss exception (write)";
+    case 0x0c0:
+        return "TLB protection violation exception (write)";
+    case 0x120:
+        return "FPU exception";
+    case 0x080:
+        return "Initial page write exception";
+    case 0x160:
+        return "Unconditional trap (TRAPA)";
+    default:
+        return "Unknown exception";
     }
 }
 
@@ -94,7 +92,7 @@ void uint_to_string(unsigned int foo, unsigned char *bar) {
     char hexdigit[16] = "0123456789abcdef";
     int i;
 
-    for(i=7; i>=0; i--) {
+    for(i = 7; i >= 0; i--) {
         bar[i] = hexdigit[(foo & 0x0f)];
         foo = foo >> 4;
     }
@@ -136,7 +134,7 @@ unsigned int get_uint(void) {
 }
 
 /* send an uncompressed data block to the pc from addr */
-unsigned int send_data_block_uncompressed(unsigned char * addr, unsigned int size) {
+unsigned int send_data_block_uncompressed(unsigned char *addr, unsigned int size) {
     unsigned int i;
     unsigned char *location = addr;
     unsigned char sum = 0;
@@ -163,7 +161,7 @@ unsigned int send_data_block_uncompressed(unsigned char * addr, unsigned int siz
 /* send a compressed data block to the pc from addr
  * falls back to uncompressed if compression unavailable or not beneficial
  */
-unsigned int send_data_block_compressed(unsigned char * addr, unsigned int size) {
+unsigned int send_data_block_compressed(unsigned char *addr, unsigned int size) {
     unsigned int i;
     unsigned char *location = addr;
     unsigned char sum = 0;
@@ -173,18 +171,20 @@ unsigned int send_data_block_compressed(unsigned char * addr, unsigned int size)
 
     /* send uncompressed if no work memory provided */
     if(!wrkmem)
-        return(send_data_block_uncompressed(addr, size));
+        return (send_data_block_uncompressed(addr, size));
 
     /* send uncompressed if too small to bother with */
     if(size < 19)
-        return(send_data_block_uncompressed(addr, size));
-    
+        return (send_data_block_uncompressed(addr, size));
+
     while(size) {
         if(size > 8192)
             sendsize = 8192;
         else
             sendsize = size;
+
         lzo1x_1_compress(addr, sendsize, buffer, &csize, wrkmem);
+
         if(csize < sendsize) {
             /* send compressed */
             scif_putchar('C');
@@ -197,13 +197,15 @@ unsigned int send_data_block_compressed(unsigned char * addr, unsigned int size)
                     scif_putchar(data);
                     sum ^= data;
                 }
-                
+
                 scif_putchar(sum);
                 data = scif_getchar();
             }
-        } else {
+        }
+        else {
             /* send uncompressed */
-            while(!(send_data_block_uncompressed(addr, sendsize)));
+            while(!(send_data_block_uncompressed(addr, sendsize)))
+                ;
         }
         size -= sendsize;
         addr += sendsize;
@@ -226,7 +228,7 @@ void draw_progress(unsigned int current, unsigned int total) {
     draw_string(216, 72, ")", 0xffff);
 }
 
-void load_data_block_general(unsigned char * addr, unsigned int total, unsigned int verbose) {
+void load_data_block_general(unsigned char *addr, unsigned int total, unsigned int verbose) {
     unsigned char type, sum, ok;
     lzo_uint size, newsize, realtotal;
     unsigned char *tmp = buffer;
@@ -235,38 +237,39 @@ void load_data_block_general(unsigned char * addr, unsigned int total, unsigned 
 
     if(verbose)
         realtotal = total;
-    
+
     while(total) {
         if(verbose)
             draw_progress(realtotal - total, realtotal);
-        
+
         type = scif_getchar();
         size = get_uint();
-        
-        switch (type) {
-            case 'U':               /* uncompressed */
-                for(i=0; i<size; i++)
-                    *(data++) = scif_getchar();
-                sum = scif_getchar();
-                scif_putchar('G');
-                total -= size;
-                break;
-            case 'C':               /* compressed */
-                for(i=0; i<size; i++)
-                    tmp[i] = scif_getchar();
-                sum = scif_getchar();
-                if(lzo1x_decompress(tmp, size, data, &newsize, 0) == LZO_E_OK) {
-                    ok = 'G';
-                    scif_putchar(ok);
-                    total -= newsize;
-                    data += newsize;
-                } else {
-                    ok = 'B';
-                    scif_putchar(ok);
-                }
-                break;
-            default:
-                break;
+
+        switch(type) {
+        case 'U': /* uncompressed */
+            for(i = 0; i < size; i++)
+                *(data++) = scif_getchar();
+            sum = scif_getchar();
+            scif_putchar('G');
+            total -= size;
+            break;
+        case 'C': /* compressed */
+            for(i = 0; i < size; i++)
+                tmp[i] = scif_getchar();
+            sum = scif_getchar();
+            if(lzo1x_decompress(tmp, size, data, &newsize, 0) == LZO_E_OK) {
+                ok = 'G';
+                scif_putchar(ok);
+                total -= newsize;
+                data += newsize;
+            }
+            else {
+                ok = 'B';
+                scif_putchar(ok);
+            }
+            break;
+        default:
+            break;
         }
     }
 
@@ -292,10 +295,11 @@ int main(void) {
     cdfs_redir_disable();
 
     if(IS_NOT(booted)) {
-        setup_video(0,0);
+        setup_video(0, 0);
         draw_string(0, 24, NAME, 0xffff);
         booted = BOOTED;
-    } else {
+    }
+    else {
         booted = NOT_BOOTED;
     }
 
@@ -314,86 +318,83 @@ int main(void) {
         scif_putchar(crap);
 
         switch(crap) {
-            case 'A': /* execute */
-                if(IS_NOT(booted)) {
-                    setup_video(0,0);
-                    draw_string(0, 24, NAME, 0xffff);
-                    booted = BOOTED;
-                }
-                clear_lines(48, 24, 0);
-                draw_string(0, 48, "executing...", 0xffff);
-                addr = get_uint();
-                console = get_uint();
-                
-                if(console)
-                    *(unsigned int *)0x8c004004 = 0xdeadbeef; /* enable console */
-                else
-                    *(unsigned int *)0x8c004004 = 0xfeedface; /* disable console */
-                
-                scif_flush();
-                disable_cache();
-                go(addr);
-                break;
-            case 'B': /* load binary */
-                if(IS_NOT(booted)) {
-                    setup_video(0,0);
-                    draw_string(0, 24, NAME, 0xffff);
-                    booted = BOOTED;
-                }
-                clear_lines(48, 24, 0);
-                draw_string(0, 48, "receiving data...",
-                    0xffffffff);
-                addr = get_uint();
-                size = get_uint();
-                load_data_block_general((unsigned char *)addr, size, 1);
-                break;
-            case 'D': /* send uncompressed binary */
-                if(IS_NOT(booted)) {
-                    setup_video(0,0);
-                    draw_string(0, 24, NAME, 0xffff);
-                    booted = BOOTED;
-                }
-                clear_lines(48, 24, 0);
-                draw_string(0, 48, "sending uncompressed data...",
-                    0xffffffff);
-            case 'E': /* send uncompressed binary, don't write to screen */
-                addr = get_uint();
-                size = get_uint();
-                send_data_block_uncompressed((unsigned char *)addr, size);
-                break;
-            case 'F': /* send compressed binary */
-                if(IS_NOT(booted)) {
-                    setup_video(0,0);
-                    draw_string(0, 24, NAME, 0xffff);
-                    booted = BOOTED;
-                }
-                clear_lines(48, 24, 0);
-                draw_string(0, 48, "sending compressed data...",
-                    0xffffffff);
-            case 'G': /* send compressed binary, don't write to screen */
-                addr = get_uint();
-                size = get_uint();
-                wrkmem = (unsigned char *)get_uint();
-                send_data_block_compressed((unsigned char *)addr, size);
-                wrkmem = 0;
-                break;
-            case 'H': /* enable cdfs redir */
-                cdfs_redir_enable();
-                break;
-            case 'S': /* change serial speed */
-                addr = get_uint();
-                scif_flush();
-                scif_init(addr);
-                addr = get_uint();
-                put_uint(addr);
-                break;
-            case 'V': /* version */
-                scif_puts(NAME);
-                scif_puts("\n");
-                break;
-            default:
-                scif_init(INITIAL_SPEED);
-                break;
+        case 'A': /* execute */
+            if(IS_NOT(booted)) {
+                setup_video(0, 0);
+                draw_string(0, 24, NAME, 0xffff);
+                booted = BOOTED;
+            }
+            clear_lines(48, 24, 0);
+            draw_string(0, 48, "executing...", 0xffff);
+            addr = get_uint();
+            console = get_uint();
+
+            if(console)
+                *(unsigned int *)0x8c004004 = 0xdeadbeef; /* enable console */
+            else
+                *(unsigned int *)0x8c004004 = 0xfeedface; /* disable console */
+
+            scif_flush();
+            disable_cache();
+            go(addr);
+            break;
+        case 'B': /* load binary */
+            if(IS_NOT(booted)) {
+                setup_video(0, 0);
+                draw_string(0, 24, NAME, 0xffff);
+                booted = BOOTED;
+            }
+            clear_lines(48, 24, 0);
+            draw_string(0, 48, "receiving data...", 0xffffffff);
+            addr = get_uint();
+            size = get_uint();
+            load_data_block_general((unsigned char *)addr, size, 1);
+            break;
+        case 'D': /* send uncompressed binary */
+            if(IS_NOT(booted)) {
+                setup_video(0, 0);
+                draw_string(0, 24, NAME, 0xffff);
+                booted = BOOTED;
+            }
+            clear_lines(48, 24, 0);
+            draw_string(0, 48, "sending uncompressed data...", 0xffffffff);
+        case 'E': /* send uncompressed binary, don't write to screen */
+            addr = get_uint();
+            size = get_uint();
+            send_data_block_uncompressed((unsigned char *)addr, size);
+            break;
+        case 'F': /* send compressed binary */
+            if(IS_NOT(booted)) {
+                setup_video(0, 0);
+                draw_string(0, 24, NAME, 0xffff);
+                booted = BOOTED;
+            }
+            clear_lines(48, 24, 0);
+            draw_string(0, 48, "sending compressed data...", 0xffffffff);
+        case 'G': /* send compressed binary, don't write to screen */
+            addr = get_uint();
+            size = get_uint();
+            wrkmem = (unsigned char *)get_uint();
+            send_data_block_compressed((unsigned char *)addr, size);
+            wrkmem = 0;
+            break;
+        case 'H': /* enable cdfs redir */
+            cdfs_redir_enable();
+            break;
+        case 'S': /* change serial speed */
+            addr = get_uint();
+            scif_flush();
+            scif_init(addr);
+            addr = get_uint();
+            put_uint(addr);
+            break;
+        case 'V': /* version */
+            scif_puts(NAME);
+            scif_puts("\n");
+            break;
+        default:
+            scif_init(INITIAL_SPEED);
+            break;
         }
     }
 }
