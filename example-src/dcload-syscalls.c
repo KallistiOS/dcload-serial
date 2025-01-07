@@ -63,7 +63,7 @@ int unlink(const char *path) {
         return -1;
 }
 
-void exit(int status) {
+noreturn void exit(int status) {
     if(*DCLOADMAGICADDR == DCLOADMAGICVALUE)
         dcloadsyscall(pcexitnr);
 

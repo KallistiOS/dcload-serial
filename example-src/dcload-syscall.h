@@ -1,7 +1,12 @@
 #ifndef __DCLOAD_SYSCALL_H__
 #define __DCLOAD_SYSCALL_H__
 
+#include <stdnoreturn.h>
+
 int dcloadsyscall(unsigned int syscall, ...);
+
+/* From crt0.S */
+noreturn void __exit(int status);
 
 #define pcreadnr 0
 #define pcwritenr 1
