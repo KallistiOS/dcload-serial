@@ -43,6 +43,14 @@
 #define O_BINARY 0
 #endif
 
+/* Sigh... KOS treats anything under 100 as invalid for a dirent from dcload, so
+   we need to offset by a bit. This aught to do. */
+#define DIRENT_OFFSET   1337
+
+#define MAX_OPEN_DIRS 512
+
+static DIR *opendirs[MAX_OPEN_DIRS];
+
 void dc_fstat(void) {
     int filedes;
     struct stat filestat;
@@ -362,6 +370,7 @@ void dc_opendir(void) {
     DIR *somedir;
     unsigned char *dirname;
     int namelen;
+    uint32_t i;
 
     namelen = recv_uint();
 
@@ -369,31 +378,50 @@ void dc_opendir(void) {
 
     recv_data(dirname, namelen, 0);
 
-    somedir = opendir((const char *)dirname);
+    /* Find an open entry */
+    for(i = 0; i < MAX_OPEN_DIRS; ++i) {
+        if(!opendirs[i])
+            break;
+    }
 
-    send_uint((unsigned int)somedir);
+    if(i < MAX_OPEN_DIRS) {
+        if(!(opendirs[i] = opendir((const char *)dirname)))
+            i = 0;
+        else
+            i += DIRENT_OFFSET;
+    }
+    else {
+        i = 0;
+    }
+
+    send_uint(i);
 
     free(dirname);
 }
 
 void dc_closedir(void) {
-    DIR *somedir;
     int retval;
+    uint32_t i = recv_uint();
 
-    somedir = (DIR *) recv_uint();
-
-    retval = closedir(somedir);
+    if(i >= DIRENT_OFFSET && i < MAX_OPEN_DIRS + DIRENT_OFFSET) {
+        retval = closedir(opendirs[i - DIRENT_OFFSET]);
+        opendirs[i - DIRENT_OFFSET] = NULL;
+    }
+    else {
+        retval = -1;
+    }
 
     send_uint(retval);
 }
 
 void dc_readdir(void) {
-    DIR *somedir;
     struct dirent *somedirent;
+    uint32_t i = recv_uint();
 
-    somedir = (DIR *) recv_uint();
-
-    somedirent = readdir(somedir);
+    if(i >= DIRENT_OFFSET && i < MAX_OPEN_DIRS + DIRENT_OFFSET)
+        somedirent = readdir(opendirs[i - DIRENT_OFFSET]);
+    else
+        somedirent = NULL;
 
     if(!somedirent) {
         send_uint(0);
@@ -424,12 +452,17 @@ void dc_readdir(void) {
 }
 
 void dc_rewinddir(void) {
-    DIR *somedir;
     int retval;
+    uint32_t i = recv_uint();
 
-    somedir = (DIR *) recv_uint();
-
-    rewinddir(somedir);
+    if(i >= DIRENT_OFFSET && i < MAX_OPEN_DIRS + DIRENT_OFFSET) {
+        rewinddir(opendirs[i - DIRENT_OFFSET]);
+        opendirs[i - DIRENT_OFFSET] = NULL;
+        retval = 0;
+    }
+    else {
+        retval = -1;
+    }
 
     send_uint(0);
 }
