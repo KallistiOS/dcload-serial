@@ -1,5 +1,7 @@
 #include "dcload-syscall.h"
 
+void __exit(int status);
+
 int link(const char *oldpath, const char *newpath) {
     if(*DCLOADMAGICADDR == DCLOADMAGICVALUE)
         return dcloadsyscall(pclinknr, oldpath, newpath);
