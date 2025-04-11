@@ -1,6 +1,8 @@
 #ifndef __DCLOAD_SYSCALLS_H__
 #define __DCLOAD_SYSCALLS_H__
 
+#include <sys/stat.h>
+
 #define O_RDONLY        0
 #define O_WRONLY        1
 #define O_RDWR          2
@@ -16,7 +18,7 @@ int creat(const char *path, int mode);
 int unlink(const char *path);
 void exit(int status);
 int stat(const char *path, struct stat *st);
-int chmod(const char *path, short mode);
+int chmod(const char *path, mode_t mode);
 int utime(const char *path, char *times);
 int chdir(const char *path);
 long time(long *t);
