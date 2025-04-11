@@ -788,15 +788,15 @@ int open_gdb_socket(int port) {
     const int enable_reuse_addr = 1;
 
 #if _WIN32
-	/* For Windows this is now necessary on modern GCC, but maybe for other OS? */
+    /* For Windows this cast is necessary on modern GCC... */
     int checkopt = setsockopt(gdb_server_socket, SOL_SOCKET, SO_REUSEADDR,
                               (const char *) &enable_reuse_addr, sizeof(enable_reuse_addr));
 #else
-	/* For other OS? */
+    /* ... but maybe it's necessary for other OS as well? */
     int checkopt = setsockopt(gdb_server_socket, SOL_SOCKET, SO_REUSEADDR,
                               &enable_reuse_addr, sizeof(enable_reuse_addr));
 #endif
-							  
+
 #ifdef __MINGW32__
     if( checkopt == SOCKET_ERROR ) {
 #else
