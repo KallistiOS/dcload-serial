@@ -525,12 +525,25 @@ void output_error(void) {
 #endif
 
 #ifndef _WIN32
+
 void get_supported_speed (unsigned int *speed, speed_t *baudconst){
     speed_t tmpbaud;
     unsigned int tmpspeed = *speed;
 
 #ifdef BOTHER
-    *baudconst = BOTHER; //with BOTHER, any custom speed can be chosen
+    /*
+       Use the BOTHER constant to enable custom baud rates.
+       This allows specifying any arbitrary speed via the `c_ispeed` and `c_ospeed` fields
+       in the extended termios2 structure (Linux-specific).
+    */
+    *baudconst = BOTHER;
+#elif __APPLE__
+    /*
+       On macOS, set an initial baud rate (e.g., B115200) as a placeholder.
+       The actual custom speed will be configured later using `ioctl(IOSSIOSPEED)`.
+       This is required because macOS handles custom baud rates differently.
+     */
+    *baudconst = B115200;
 #else
     for (tmpbaud = B0; tmpbaud == B0;) {
         switch(tmpspeed) {
@@ -587,9 +600,9 @@ void tc_close (int fd) {
 
 int tc_get_attr(int fd, termiosx_t *tio) {
 #ifdef BOTHER
-    return ioctl(dcfd, TCGETS2, tio);
+    return ioctl(fd, TCGETS2, tio);
 #else
-    return tcgetattr(dcfd, tio);
+    return tcgetattr(fd, tio);
 #endif
 }
 
@@ -631,19 +644,16 @@ void set_io_speed (unsigned int speed, speed_t baudconst) {
     }
 
 #ifdef __APPLE__
-    if(speed > 115200) {
-        /* Necessary to call ioctl to set non-standard speeds (aka higher than 115200) */
-        if(ioctl(dcfd, IOSSIOSPEED, &speed) < 0) {
-            perror("IOSSIOSPEED");
-            printf("warning: your baud rate is likely set incorrectly\n");
-        }
+    if(ioctl(dcfd, IOSSIOSPEED, &speed) < 0) {
+        perror("IOSSIOSPEED");
+        printf("warning: your baud rate is likely set incorrectly\n");
     }
 #endif
 }
-#endif
+#endif /* #ifndef _WIN32 */
 
 /* setup serial port */
-int open_serial(char *devicename, unsigned int speed, unsigned int *speedtest) {
+int open_serial(const char *devicename, unsigned int speed, unsigned int *speedtest) {
     *speedtest = speed;
 #ifndef _WIN32
     speed_t baudconst;
@@ -1371,18 +1381,20 @@ int main(int argc, char *argv[]) {
     if(cdfs_redir)
         printf("Cdfs redirection enabled\n");
 
-    if(speedhack)
+    if(speedhack && (speed == 115200 || speed == 230400))
         printf("Alternate 115200/230400 enabled\n");
 
     if(use_extclk)
         printf("External clock usage enabled\n");
 
-    /* test for resonable baud - this is for POSIX systems */
+#ifndef __APPLE__
+    /* test for reasonable baud - this is for POSIX systems */
     if (speed != INITIAL_SPEED) {
         if (open_serial(device_name, speed, &speed)<0)
             return 1;
         close_serial();
     }
+#endif
   
     if (open_serial(device_name, INITIAL_SPEED, &dummy)<0)
         return 1;
