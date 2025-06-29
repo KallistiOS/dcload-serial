@@ -1,4 +1,4 @@
-/* 
+/*
  * This file is part of the dcload Dreamcast serial loader
  *
  * Copyright (C) 2001 Andrew Kieschnick <andrewk@napalm-x.com>
@@ -85,4 +85,3 @@ int gdGdcChangeDataType(int *param) {
 }
 
 void gdGdcInitSystem(void) { }
-

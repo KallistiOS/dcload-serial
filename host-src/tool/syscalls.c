@@ -260,7 +260,7 @@ void dc_chmod(void) {
     int mode;
     unsigned char *pathname;
     int retval;
-    
+
     namelen = recv_uint();
 
     pathname = malloc(namelen);
@@ -357,7 +357,7 @@ void dc_utime(void) {
         tbuf.modtime = recv_uint();
 
         retval = utime((const char *)pathname, &tbuf);
-    } 
+    }
     else {
         retval = utime((const char *)pathname, 0);
     }
@@ -428,7 +428,7 @@ void dc_readdir(void) {
         send_uint(0);
         return;
     }
-        
+
     send_uint(1);
     send_uint(somedirent->d_ino);
 #ifdef _WIN32
@@ -522,7 +522,7 @@ void dc_gdbpacket(void) {
     if(socket_fd == 0) {
         printf("waiting for gdb client connection...\n");
         socket_fd = accept(gdb_server_socket, NULL, NULL);
-        
+
         if(socket_fd == 0) {
             perror("error accepting gdb server connection");
             send_uint(-1);

@@ -6,6 +6,4 @@ unsigned int recv_uint(void);
 void recv_data(void *data, unsigned int total, unsigned int verbose);
 void send_data(unsigned char *addr, unsigned int size, unsigned int verbose);
 
-#endif
-
-
+#endif /* __DC_IO_H__ */

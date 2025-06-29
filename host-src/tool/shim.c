@@ -50,19 +50,24 @@
 int vasprintf(char ** __restrict__ ret,
               const char * __restrict__ format,
               va_list ap) {
-  int len;
-  /* Get Length */
-  len = __mingw_vsnprintf(NULL,0,format,ap);
-  if (len < 0) return -1;
-  /* +1 for \0 terminator. */
-  *ret = malloc(len + 1);
-  /* Check malloc fail*/
-  if (!*ret) return -1;
-  /* Write String */
-  __mingw_vsnprintf(*ret,len+1,format,ap);
-  /* Terminate explicitly */
-  (*ret)[len] = '\0';
-  return len;
+    int len;
+    /* Get Length */
+    len = __mingw_vsnprintf(NULL,0,format,ap);
+    if (len < 0) return -1;
+
+    /* +1 for \0 terminator. */
+    *ret = malloc(len + 1);
+
+    /* Check malloc fail*/
+    if (!*ret) return -1;
+
+    /* Write String */
+    __mingw_vsnprintf(*ret,len+1,format,ap);
+
+    /* Terminate explicitly */
+    (*ret)[len] = '\0';
+
+    return len;
 }
 
 // Thanks to Dietrich Epp
@@ -81,7 +86,7 @@ int __cdecl __MINGW_NOTHROW libintl_asprintf(char **strp,
 int __cdecl __MINGW_NOTHROW libintl_vasprintf(char **restrict strp,
                                               const char *restrict fmt,
                                               va_list arg ) {
-	return vasprintf(strp, fmt, arg);
+    return vasprintf(strp, fmt, arg);
 }
 
 // See: https://stackoverflow.com/a/60380005
@@ -89,7 +94,7 @@ int __cdecl __MINGW_NOTHROW __ms_vsnprintf(char *buffer,
                                            size_t count,
                                            const char *format,
                                            va_list argptr) {
-	return __mingw_vsnprintf(buffer, count, format, argptr);
+    return __mingw_vsnprintf(buffer, count, format, argptr);
 }
 
 // Thanks to Kenji Uno and god
@@ -101,7 +106,7 @@ FILE * __cdecl __MINGW_NOTHROW _imp____acrt_iob_func(int handle) {
         case 1: return stdout;
         case 2: return stderr;
     }
-    
+
     return NULL;
 }
 

@@ -7,4 +7,4 @@ void init_video(int cabletype, int pixelmode);
 int check_cable(void);
 unsigned char *get_font_address(void);
 
-#endif
+#endif /* __VIDEO_H__ */

@@ -1,4 +1,4 @@
-/* 
+/*
  * dcload, a Dreamcast serial loader
  *
  * Copyright (C) 2001 Andrew Kieschnick <andrewk@napalm-x.com>
@@ -178,7 +178,7 @@ unsigned int send_data_block_compressed(unsigned char * addr, unsigned int size)
     /* send uncompressed if too small to bother with */
     if(size < 19)
         return(send_data_block_uncompressed(addr, size));
-    
+
     while(size) {
         if(size > 8192)
             sendsize = 8192;
@@ -197,7 +197,7 @@ unsigned int send_data_block_compressed(unsigned char * addr, unsigned int size)
                     scif_putchar(data);
                     sum ^= data;
                 }
-                
+
                 scif_putchar(sum);
                 data = scif_getchar();
             }
@@ -235,14 +235,14 @@ void load_data_block_general(unsigned char * addr, unsigned int total, unsigned 
 
     if(verbose)
         realtotal = total;
-    
+
     while(total) {
         if(verbose)
             draw_progress(realtotal - total, realtotal);
-        
+
         type = scif_getchar();
         size = get_uint();
-        
+
         switch (type) {
             case 'U':               /* uncompressed */
                 for(i=0; i<size; i++)
@@ -324,12 +324,12 @@ int main(void) {
                 draw_string(0, 48, "executing...", 0xffff);
                 addr = get_uint();
                 console = get_uint();
-                
+
                 if(console)
                     *(unsigned int *)0x8c004004 = 0xdeadbeef; /* enable console */
                 else
                     *(unsigned int *)0x8c004004 = 0xfeedface; /* disable console */
-                
+
                 scif_flush();
                 disable_cache();
                 go(addr);

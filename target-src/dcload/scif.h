@@ -1,4 +1,4 @@
-/* 
+/*
  * This file is part of the dcload Dreamcast serial loader
  *
  * Copyright (C) 2001 Andrew Kieschnick <andrewk@napalm-x.com>
@@ -59,4 +59,4 @@ unsigned int scif_isdata(void);
 void scif_putchar(unsigned char foo);
 void scif_puts(unsigned char *foo);
 
-#endif
+#endif /* __SCIF_H__ */

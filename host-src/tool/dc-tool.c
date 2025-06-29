@@ -20,7 +20,7 @@
  */
 
 #include "config.h"
- 
+
 #ifdef WITH_BFD
 #include <bfd.h>
 #else
@@ -73,18 +73,18 @@ int gdb_socket_started = 0;
 int gdb_server_socket = -1;
 int socket_fd = 0;
 #else
-/* Winsock SOCKET is defined as an unsigned int, so -1 won't work here */	
+/* Winsock SOCKET is defined as an unsigned int, so -1 won't work here */
 SOCKET gdb_server_socket = 0;
-SOCKET socket_fd = 0;	
+SOCKET socket_fd = 0;
 #endif
 
-#define INITIAL_SPEED  57600
+#define INITIAL_SPEED   57600
 
-#define DCLOADBUFFER	16384 /* was 8192 */
+#define DCLOADBUFFER    16384 /* was 8192 */
 #ifdef _WIN32
-#define DATA_BITS	8
-#define PARITY_SET	NOPARITY
-#define STOP_BITS	ONESTOPBIT
+#define DATA_BITS       8
+#define PARITY_SET      NOPARITY
+#define STOP_BITS       ONESTOPBIT
 #endif
 
 #define VERSION PACKAGE_VERSION
@@ -165,13 +165,13 @@ int getopt(int nargc, char * const *nargv, const char *ostr) {
             place = EMSG;
             return (-1);
         }
-        if(place[1] && *++place == '-') {      /* found "--" */
+        if(place[1] && *++place == '-') {   /* found "--" */
             ++optind;
             place = EMSG;
             return (-1);
         }
     }
-    
+
     /* option letter okay? */
     if((optopt = (int)*place++) == (int)':' ||
       !(oli = strchr(ostr, optopt))) {
@@ -231,24 +231,24 @@ int dcfd;
 typedef struct termios2 termiosx_t ;
 #else
 typedef struct termios termiosx_t;
-#endif
+#endif /* BOTHER */
 termiosx_t oldtio;
 #else
 HANDLE hCommPort;
 BOOL bDebugSocketStarted = FALSE;
-#endif
+#endif /* _WIN32 */
 
 void cleanup(void) {
     if(!gdb_socket_started)
         return;
 
     gdb_socket_started = 0;
-    
+
     // Send SIGTERM to the GDB Client, telling remote DC program has ended
     char gdb_buf[16];
-    strcpy(gdb_buf, "+$X0f#ee\0");		
-    
-#ifdef __MINGW32__		
+    strcpy(gdb_buf, "+$X0f#ee\0");
+
+#ifdef __MINGW32__
     send(socket_fd, gdb_buf, strlen(gdb_buf), 0);
     sleep(1);
     closesocket(socket_fd);
@@ -269,7 +269,7 @@ int serial_read(void *buffer, int count) {
     fSuccess = ReadFile(hCommPort, buffer, count, (DWORD *)&count, NULL);
     if(!fSuccess)
         return -1;
-        
+
     return count;
 }
 
@@ -305,7 +305,7 @@ int serial_write(void *buffer, int count) {
 int serial_putc(char ch) {
     return write(dcfd,&ch,1);
 }
-#endif
+#endif /* _WIN32 */
 
 /* read count bytes from dc into buf */
 void blread(void *buf, int count) {
@@ -323,7 +323,7 @@ void blread(void *buf, int count) {
     }
 }
 
-char serial_getc() {
+char serial_getc(void) {
     int retval;
     char tmp;
 
@@ -387,41 +387,41 @@ void recv_data(void *data, unsigned int total, unsigned int verbose) {
 
         size = recv_uint();
 
-        switch (type) {
-        case 'U':		// uncompressed
-            if(verbose) {
-                printf("U");
-                fflush(stdout);
-            }
-            blread(data, size);
-            blread(&sum, 1);
-            ok = 'G';
-            serial_write(&ok, 1);
-            total -= size;
-            data += size;
-            break;
-        case 'C':		// compressed
-            if(verbose) {
-                printf("C");
-                fflush(stdout);
-            }
-            tmp = malloc(size);
-            blread(tmp, size);
-            blread(&sum, 1);
-            if(lzo1x_decompress(tmp, size, data, &newsize, 0) == LZO_E_OK) {
+        switch(type) {
+            case 'U':       // uncompressed
+                if(verbose) {
+                    printf("U");
+                    fflush(stdout);
+                }
+                blread(data, size);
+                blread(&sum, 1);
                 ok = 'G';
                 serial_write(&ok, 1);
-                total -= newsize;
-                data += newsize;
-            } else {
-                ok = 'B';
-                serial_write(&ok, 1);
-                printf("\nrecv_data: decompression failed!\n");
-            }
-            free(tmp);
-            break;
-        default:
-            break;
+                total -= size;
+                data += size;
+                break;
+            case 'C':       // compressed
+                if(verbose) {
+                    printf("C");
+                    fflush(stdout);
+                }
+                tmp = malloc(size);
+                blread(tmp, size);
+                blread(&sum, 1);
+                if(lzo1x_decompress(tmp, size, data, &newsize, 0) == LZO_E_OK) {
+                    ok = 'G';
+                    serial_write(&ok, 1);
+                    total -= newsize;
+                    data += newsize;
+                } else {
+                    ok = 'B';
+                    serial_write(&ok, 1);
+                    printf("\nrecv_data: decompression failed!\n");
+                }
+                free(tmp);
+                break;
+            default:
+                break;
         }
     }
 
@@ -432,7 +432,7 @@ void recv_data(void *data, unsigned int total, unsigned int verbose) {
 }
 
 /* send size bytes to dc from addr */
-void send_data(unsigned char * addr, unsigned int size, unsigned int verbose) {
+void send_data(unsigned char *addr, unsigned int size, unsigned int verbose) {
     unsigned int i;
     unsigned char *location = (unsigned char *) addr;
     unsigned char sum = 0;
@@ -440,7 +440,7 @@ void send_data(unsigned char * addr, unsigned int size, unsigned int verbose) {
     lzo_uint csize;
     unsigned int sendsize;
     unsigned char c;
-    unsigned char * buffer;
+    unsigned char *buffer;
 
     buffer = malloc(DCLOADBUFFER + DCLOADBUFFER / 64 + 16 + 3);
 
@@ -454,7 +454,7 @@ void send_data(unsigned char * addr, unsigned int size, unsigned int verbose) {
             sendsize = DCLOADBUFFER;
         else
             sendsize = size;
-            
+
         lzo1x_1_compress((unsigned char *)addr, sendsize, buffer, &csize, wrkmem);
 
         if(csize < sendsize) {
@@ -495,7 +495,7 @@ void send_data(unsigned char * addr, unsigned int size, unsigned int verbose) {
             serial_write(&sum, 1);
             blread(&data, 1);
         }
-        
+
         size -= sendsize;
         addr += sendsize;
     }
@@ -525,8 +525,7 @@ void output_error(void) {
 #endif
 
 #ifndef _WIN32
-
-void get_supported_speed (unsigned int *speed, speed_t *baudconst){
+void get_supported_speed (unsigned int *speed, speed_t *baudconst) {
     speed_t tmpbaud;
     unsigned int tmpspeed = *speed;
 
@@ -545,7 +544,7 @@ void get_supported_speed (unsigned int *speed, speed_t *baudconst){
      */
     *baudconst = B115200;
 #else
-    for (tmpbaud = B0; tmpbaud == B0;) {
+    for(tmpbaud = B0; tmpbaud == B0;) {
         switch(tmpspeed) {
 #ifdef B1500000
         case 1500000:
@@ -588,7 +587,7 @@ void get_supported_speed (unsigned int *speed, speed_t *baudconst){
     }
     *baudconst = tmpbaud;
     *speed = tmpspeed;
-#endif
+#endif /* BOTHER */
 }
 
 void tc_close (int fd) {
@@ -611,27 +610,27 @@ int tc_set_attr (int fd, termiosx_t *tio) {
     return ioctl(fd, TCSETS2, tio);
 #else
     tcflush(fd, TCIOFLUSH);
-	return tcsetattr(fd, TCSANOW, tio);
+    return tcsetattr(fd, TCSANOW, tio);
 #endif
 }
 
 void set_io_speed (unsigned int speed, speed_t baudconst) {
     termiosx_t newtio;
 
-    tc_get_attr(dcfd, &oldtio);	// save current serial port settings
+    tc_get_attr(dcfd, &oldtio); // save current serial port settings
 
-    memset(&newtio, 0, sizeof(newtio));	// clear struct for new port settings
+    memset(&newtio, 0, sizeof(newtio)); // clear struct for new port settings
     newtio.c_cflag = CRTSCTS | CS8 | CLOCAL | CREAD;
     newtio.c_iflag = IGNPAR;
     newtio.c_oflag = 0;
     newtio.c_lflag = 0;
-    newtio.c_cc[VTIME] = 0;	// inter-character timer unused
-    newtio.c_cc[VMIN] = 1;	// blocking read until 1 character arrives
+    newtio.c_cc[VTIME] = 0;     // inter-character timer unused
+    newtio.c_cc[VMIN] = 1;      // blocking read until 1 character arrives
 
 #ifdef BOTHER
     newtio.c_cflag |= BOTHER;
     newtio.c_ospeed = speed;
-    newtio.c_cflag |= BOTHER << IBSHIFT;    
+    newtio.c_cflag |= BOTHER << IBSHIFT;
     newtio.c_ispeed = speed;
 #else
     cfsetispeed(&newtio, baudconst);
@@ -667,14 +666,14 @@ int open_serial(const char *devicename, unsigned int speed, unsigned int *speedt
 
     oldspeed = speed;
     get_supported_speed (&speed, &baudconst);
-    if (speed != oldspeed){
+    if(speed != oldspeed) {
         printf("Unsupported baudrate (%d) - falling back to baudrate (%d)\n", oldspeed, speed);
         *speedtest = speed;
     }
 
     set_io_speed (speed, baudconst);
 
-#else
+#else /* _WIN32 */
     BOOL fSuccess;
     COMMTIMEOUTS ctmoCommPort;
     DCB dcbCommPort;
@@ -715,7 +714,7 @@ int open_serial(const char *devicename, unsigned int speed, unsigned int *speedt
         output_error();
         return -1;
     }
-#endif
+#endif /* !_WIN32 */
     return 0;
 }
 
@@ -764,13 +763,13 @@ int change_speed(char *device_name, unsigned int speed) {
         send_uint(0);
     else
         send_uint(speed);
-        
+
     printf("Changing speed to %d bps... ", speed);
     close_serial();
 
     if(open_serial(device_name, speed, &dummy)<0)
         return 1;
-        
+
     send_uint(rv);
     rv = recv_uint();
     printf("done\n");
@@ -808,13 +807,13 @@ int open_gdb_socket(int port) {
 #endif
 
 #ifdef __MINGW32__
-    if( checkopt == SOCKET_ERROR ) {
+    if(checkopt == SOCKET_ERROR) {
 #else
-    if( checkopt < 0 ) {
+    if(checkopt < 0) {
 #endif
-        perror( "warning: failed to set gdb socket options" );
+        perror( "warning: failed to set gdb socket options");
     }
-    
+
     int checkbind = bind(gdb_server_socket, (struct sockaddr*)&server_addr, sizeof(server_addr));
 #ifdef __MINGW32__
     if(checkbind == SOCKET_ERROR) {
@@ -859,13 +858,13 @@ void usage(void) {
     printf("-g            Start a GDB server\n");
     printf("-h            Usage information (you\'re looking at it)\n\n");
     cleanup();
-    
+
     exit(0);
 }
 
 /* Got to make sure WinSock is initalized */
 #ifdef __MINGW32__
-int start_ws() {
+int start_ws(void) {
     WSADATA wsaData;
     int failed = 0;
     failed = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -873,7 +872,7 @@ int start_ws() {
         perror("WSAStartup");
         return 1;
     }
-    
+
     return 0;
 }
 #endif
@@ -1019,7 +1018,7 @@ unsigned int upload(unsigned char *filename, unsigned int address) {
         elf_end(elf);
         close(inputfd);
     }
-#endif
+#endif /* WITH_BFD */
     /* if all else fails, send raw bin */
     printf("File format is raw binary, start address is 0x%x\n", address);
     inputfd = open((char *)filename, O_RDONLY | O_BINARY);
@@ -1111,7 +1110,7 @@ void download(unsigned char *filename, unsigned int address,
 void execute(unsigned int address, unsigned int console) {
     unsigned char c;
 
-    printf("Sending execute command (0x%x, console=%d)...",address,console);
+    printf("Sending execute command (0x%x, console=%d)...", address, console);
 
     serial_write("A", 1);
     serial_read(&c, 1);
@@ -1142,7 +1141,7 @@ void do_console(unsigned char *path, unsigned char *isofile) {
         fflush(stdout);
         serial_read(&command, 1);
 
-        switch (command) {
+        switch(command) {
             case 0:
                 finish_serial();
                 exit(0);
@@ -1244,9 +1243,9 @@ void do_dumbterm(void) {
 }
 
 #ifdef __MINGW32__
-#define AVAILABLE_OPTIONS 		"x:u:d:a:s:t:b:i:npqheEg"
+#define AVAILABLE_OPTIONS       "x:u:d:a:s:t:b:i:npqheEg"
 #else
-#define AVAILABLE_OPTIONS		"x:u:d:a:s:t:b:c:i:npqheEg"
+#define AVAILABLE_OPTIONS       "x:u:d:a:s:t:b:c:i:npqheEg"
 #endif
 
 int main(int argc, char *argv[]) {
@@ -1269,7 +1268,7 @@ int main(int argc, char *argv[]) {
 
     someopt = getopt(argc, argv, AVAILABLE_OPTIONS);
     while(someopt > 0) {
-        switch (someopt) {
+        switch(someopt) {
             case 'x':
                 if(command) {
                     printf("You can only specify one of -x, -u, and -d\n");
@@ -1341,10 +1340,10 @@ int main(int argc, char *argv[]) {
                 use_extclk = 1;
                 break;
             case 'g':
-                printf("Starting a GDB server on port 2159\n");		
+                printf("Starting a GDB server on port 2159\n");
 #ifdef __MINGW32__
                 if(start_ws())
-                    return -1;		
+                    return -1;
 #endif
                 open_gdb_socket(2159);
                 gdb_socket_started = 1;
@@ -1389,20 +1388,20 @@ int main(int argc, char *argv[]) {
 
 #ifndef __APPLE__
     /* test for reasonable baud - this is for POSIX systems */
-    if (speed != INITIAL_SPEED) {
-        if (open_serial(device_name, speed, &speed)<0)
+    if(speed != INITIAL_SPEED) {
+        if(open_serial(device_name, speed, &speed)<0)
             return 1;
         close_serial();
     }
 #endif
   
-    if (open_serial(device_name, INITIAL_SPEED, &dummy)<0)
+    if(open_serial(device_name, INITIAL_SPEED, &dummy)<0)
         return 1;
 
-    if (speed != INITIAL_SPEED)
+    if(speed != INITIAL_SPEED)
         change_speed(device_name, speed);
 
-    switch (command) {
+    switch(command) {
         case 'x':
             if(cdfs_redir) {
                 unsigned char c;

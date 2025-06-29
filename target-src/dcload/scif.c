@@ -1,4 +1,4 @@
-/* 
+/*
  * This file is part of the dcload Dreamcast serial loader
  *
  * Copyright (C) 2001 Andrew Kieschnick <andrewk@napalm-x.com>
@@ -35,23 +35,23 @@ void scif_flush(void) {
 void scif_init(int bps) {
     /* Modified to allow external baudrate (bps == 0) */
     int i;
- 
+
     *SCSCR2 = bps ? 0x0 : 0x02;	/* clear TE and RE bits / if (bps == 0) CKE1 on (bit 1) */
     *SCFCR2 = 0x6;		/* set TFRST and RFRST bits in SCFCR2 */
     *SCSMR2 = 0x0;		/* set data transfer format 8n1 */
-   
+
     if(bps) *SCBRR2 = (50 * 1000000) / (32 * bps) - 1;	/* if (bps != 0) set baudrate */
- 
+
     for(i = 0; i < 100000; i++);	/* delay at least 1 bit interval */
- 
+
     *SCFCR2 = 12;
     *SCFCR2 = 0x8;		/* set MCE in SCFCR2 */
     *SCSPTR2 = 0;
     *SCFSR2 = 0x60;
     *SCLSR2 = 0;
     *SCSCR2 = bps ? 0x30 : 0x32;	/* set TE and RE bits / if (bps == 0) CKE1 on (bit 1) */
- 
-    for(i = 0; i < 100000; i++); 
+
+    for(i = 0; i < 100000; i++);
 }
 
 unsigned char scif_getchar(void) {
