@@ -1141,7 +1141,8 @@ void do_console(unsigned char *path, unsigned char *isofile) {
 
         switch(command) {
             case 0:
-                dc_exit();
+                finish_serial();
+                exit(0);
                 break;
             case 1:
                 dc_fstat();
@@ -1206,6 +1207,9 @@ void do_console(unsigned char *path, unsigned char *isofile) {
             case 21:
                 dc_rewinddir();
                 break;
+            case 22:
+                dc_exit();
+                break;
             default:
                 printf("Unimplemented command (%d) \n", command);
                 printf("Assuming program has exited, or something...\n");
@@ -1262,7 +1266,7 @@ int main(int argc, char *argv[]) {
 
     if (argc < 2) {
         usage();
-	exit(-1);
+        exit(-1);
     }
     someopt = getopt(argc, argv, AVAILABLE_OPTIONS);
     while(someopt > 0) {
@@ -1330,7 +1334,7 @@ int main(int argc, char *argv[]) {
                 break;
             case 'h':
                 usage();
-		exit(0);
+                exit(0);
                 break;
             case 'e':
                 speedhack = 1;
