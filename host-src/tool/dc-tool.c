@@ -947,7 +947,7 @@ unsigned int upload(unsigned char *filename, unsigned int address) {
         exit(-1);
     }
 
-    if((inputfd = open((char *)filename, O_RDONLY)) < 0) {
+    if((inputfd = open((char *)filename, O_RDONLY | O_BINARY)) < 0) {
         perror((char *)filename);
         exit(-1);
     }
