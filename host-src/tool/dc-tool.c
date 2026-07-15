@@ -38,6 +38,10 @@
 #include <windows.h>
 #else
 #ifdef __linux__
+#ifndef __GLIBC__
+/* musl libc */
+#include <asm/ioctls.h>
+#endif
 #include <asm/termbits.h>
 #include <sys/ioctl.h>
 #else
