@@ -24,6 +24,7 @@
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
 #include <errno.h>
 #include <sys/time.h>
@@ -49,8 +50,110 @@
 #define DIRENT_OFFSET   1337
 
 #define MAX_OPEN_DIRS 512
+#define MAX_TRACKED_FDS (1024+3) // 3 - num for stdio
 
-static DIR *opendirs[MAX_OPEN_DIRS];
+typedef struct {
+    char *name;
+    DIR *dir;
+} dir_data;
+
+static dir_data opendirs[MAX_OPEN_DIRS];
+// Three first descriptors are for stdio
+static char *fd_names[MAX_TRACKED_FDS] = { "stdin", "stdout", "stderr" };
+
+unsigned int enabled_log_groups = 0;
+
+static const struct {
+    const char *name;
+    unsigned int mask;
+} log_group_list[] = {
+    { "open",   LOG_OPEN    },
+    { "close",  LOG_CLOSE   },
+    { "read",   LOG_READ    },
+    { "write",  LOG_WRITE   },
+    { "seek",   LOG_SEEK    },
+    { "stat",   LOG_STAT    },
+    { "delete", LOG_DELETE  },
+    { "link",   LOG_LINK    },
+    { "chdir",  LOG_CHDIR   },
+    { "chmod",  LOG_CHMOD   },
+    { "utime",  LOG_UTIME   },
+    { "dir",    LOG_DIR     },
+    { "time",   LOG_TIME    },
+    { "cdfs",   LOG_CDFS    },
+    { "file",   LOG_OPEN | LOG_CLOSE | LOG_DELETE | LOG_LINK },
+    { "io",     LOG_READ | LOG_WRITE | LOG_SEEK },
+    { "all",    LOG_ALL     },
+};
+
+#define LOG_GROUP_COUNT (sizeof(log_group_list) / sizeof(log_group_list[0]))
+
+static int has_log_group(const char *arg, const char *name) {
+    size_t len = strlen(name);
+    const char *p = arg;
+
+    while((p = strstr(p, name)) != NULL) {
+        if((p == arg || p[-1] == ',') && (p[len] == ',' || p[len] == '\0'))
+            return 1;
+        p += len;
+    }
+
+    return 0;
+}
+
+int parse_log_groups(const char *arg) {
+    size_t i;
+    enabled_log_groups = 0;
+
+    for(i = 0; i < LOG_GROUP_COUNT; i++) {
+        enabled_log_groups |= (has_log_group(arg, log_group_list[i].name) ? log_group_list[i].mask : 0);
+    }
+
+    // Return -1 if no known log groups were found
+    return enabled_log_groups == 0 ? -1 : 0;
+}
+
+void help_log_groups(void) {
+    size_t i;
+
+    printf("Log groups for -v (comma-separated): ");
+    for(i = 0; i < LOG_GROUP_COUNT; i++) {
+        const char *del = i == LOG_GROUP_COUNT - 1 ? "\n" : ", ";
+        printf("%s%s", log_group_list[i].name, del);
+    }
+}
+
+static void log_msg(unsigned int group, const char *tag, const char *fmt, ...) {
+    va_list ap;
+
+    if(!(enabled_log_groups & group))
+        return;
+
+    // we use stderr here to flush output right with dc output
+    fprintf(stderr, "[%s] ", tag);
+    va_start(ap, fmt);
+    vfprintf(stderr, fmt, ap);
+    va_end(ap);
+    fputc('\n', stderr);
+}
+
+static void store_fd(int fd, const char *name) {
+    if(enabled_log_groups && fd > 2 && fd < MAX_TRACKED_FDS) {
+        free(fd_names[fd]);
+        fd_names[fd] = name ? strdup(name) : NULL;
+    }
+}
+
+static const char *get_filename(int fd) {
+    static char buf[1024];
+
+    if(fd >= 0 && fd < MAX_TRACKED_FDS && fd_names[fd])
+        snprintf(buf, sizeof(buf), "%s", fd_names[fd]);
+    else
+        snprintf(buf, sizeof(buf), "fd %d", fd);
+
+    return buf;
+}
 
 void dc_fstat(void) {
     int filedes;
@@ -59,6 +162,8 @@ void dc_fstat(void) {
 
     filedes = recv_uint();
     retval = fstat(filedes, &filestat);
+
+    log_msg(LOG_STAT, "fstat", "'%s'", get_filename(filedes));
 
     send_uint(filestat.st_dev);
     send_uint(filestat.st_ino);
@@ -96,6 +201,10 @@ void dc_write(void) {
 
     retval = write(filedes, data, count);
 
+    // Skip console output
+    if(filedes != 1 && filedes != 2)
+        log_msg(LOG_WRITE, "write", "'%s'", get_filename(filedes));
+
     send_uint(retval);
 
     free(data);
@@ -112,6 +221,9 @@ void dc_read(void) {
 
     data = malloc(count);
     retval = read(filedes, data, count);
+
+    if(filedes != 0)
+        log_msg(LOG_READ, "read", "'%s'", get_filename(filedes));
 
     send_data(data, count, 0);
 
@@ -154,6 +266,9 @@ void dc_open(void) {
 
     retval = open((const char *)pathname, ourflags | O_BINARY, mode);
 
+    log_msg(LOG_OPEN, "open", "'%s'", pathname);
+    store_fd(retval, (const char *)pathname);
+
     send_uint(retval);
 
     free(pathname);
@@ -166,6 +281,10 @@ void dc_close(void) {
     filedes = recv_uint();
 
     retval = close(filedes);
+
+    log_msg(LOG_CLOSE, "close", "'%s'", get_filename(filedes));
+    if(retval == 0 && filedes > 2)
+        store_fd(filedes, NULL);
 
     send_uint(retval);
 }
@@ -185,6 +304,9 @@ void dc_creat(void) {
     mode = recv_uint();
 
     retval = creat((const char *)pathname, mode);
+
+    log_msg(LOG_OPEN, "create", "'%s'", pathname);
+    store_fd(retval, (const char *)pathname);
 
     send_uint(retval);
 
@@ -213,6 +335,8 @@ void dc_link(void) {
     retval = link((const char *)pathname1, (const char *)pathname2);
 #endif
 
+    log_msg(LOG_LINK, "link", "'%s' '%s'", pathname1, pathname2);
+
     send_uint(retval);
 
     free(pathname1);
@@ -232,6 +356,8 @@ void dc_unlink(void) {
 
     retval = unlink((const char *)pathname);
 
+    log_msg(LOG_DELETE, "delete", "'%s'", pathname);
+
     send_uint(retval);
 
     free(pathname);
@@ -249,6 +375,8 @@ void dc_chdir(void) {
     recv_data(pathname, namelen, 0);
 
     retval = chdir((const char *)pathname);
+
+    log_msg(LOG_CHDIR, "chdir", "'%s'", pathname);
 
     send_uint(retval);
 
@@ -271,6 +399,8 @@ void dc_chmod(void) {
 
     retval = chmod((const char *)pathname, mode);
 
+    log_msg(LOG_CHMOD, "chmod", "'%s'", pathname);
+
     send_uint(retval);
 
     free(pathname);
@@ -288,6 +418,9 @@ void dc_lseek(void) {
 
     retval = lseek(filedes, offset, whence);
 
+    if(filedes > 2)
+        log_msg(LOG_SEEK, "seek", "'%s'", get_filename(filedes));
+
     send_uint(retval);
 }
 
@@ -295,6 +428,8 @@ void dc_time(void) {
     time_t t;
 
     time(&t);
+
+    log_msg(LOG_TIME, "time", "%lld", (long long)t);
 
     send_uint(t);
 }
@@ -312,6 +447,8 @@ void dc_stat(void) {
     recv_data(filename, namelen, 0);
 
     retval = stat((const char *)filename, &filestat);
+
+    log_msg(LOG_STAT, "stat", "'%s'", filename);
 
     send_uint(filestat.st_dev);
     send_uint(filestat.st_ino);
@@ -362,6 +499,8 @@ void dc_utime(void) {
         retval = utime((const char *)pathname, 0);
     }
 
+    log_msg(LOG_UTIME, "utime", "'%s'", pathname);
+
     send_uint(retval);
 
     free(pathname);
@@ -381,23 +520,30 @@ void dc_opendir(void) {
 
     /* Find an open entry */
     for(i = 0; i < MAX_OPEN_DIRS; ++i) {
-        if(!opendirs[i])
+        if(!opendirs[i].dir)
             break;
     }
 
+    log_msg(LOG_DIR, "opendir", "'%s'", dirname);
+
     if(i < MAX_OPEN_DIRS) {
-        if(!(opendirs[i] = opendir((const char *)dirname)))
+        dir_data *curr_dir = &opendirs[i];
+
+        if(!(curr_dir->dir = opendir((const char *)dirname))) {
             i = 0;
-        else
+            free(dirname);
+        } else {
+            curr_dir->name = (char *)dirname;
             i += DIRENT_OFFSET;
+        }
     }
     else {
         i = 0;
+
+        free(dirname);
     }
 
     send_uint(i);
-
-    free(dirname);
 }
 
 void dc_closedir(void) {
@@ -405,10 +551,18 @@ void dc_closedir(void) {
     uint32_t i = recv_uint();
 
     if(i >= DIRENT_OFFSET && i < MAX_OPEN_DIRS + DIRENT_OFFSET) {
-        retval = closedir(opendirs[i - DIRENT_OFFSET]);
-        opendirs[i - DIRENT_OFFSET] = NULL;
-    }
-    else {
+        dir_data *curr_dir = &opendirs[i - DIRENT_OFFSET];
+        if(curr_dir->dir) {
+            log_msg(LOG_DIR, "closedir", "'%s'", curr_dir->name ? curr_dir->name : "<unknown>");
+
+            retval = closedir(curr_dir->dir);
+            free(curr_dir->name);
+            curr_dir->dir = NULL;
+            curr_dir->name = NULL;
+        } else {
+            retval = 0;
+        }
+    } else {
         retval = -1;
     }
 
@@ -419,11 +573,20 @@ void dc_readdir(void) {
     struct dirent *somedirent;
     uint32_t i = recv_uint();
 
-    if(i >= DIRENT_OFFSET && i < MAX_OPEN_DIRS + DIRENT_OFFSET)
-        somedirent = readdir(opendirs[i - DIRENT_OFFSET]);
-    else
-        somedirent = NULL;
+    if(i >= DIRENT_OFFSET && i < MAX_OPEN_DIRS + DIRENT_OFFSET) {
+        dir_data *curr_dir = &opendirs[i - DIRENT_OFFSET];
+        if(curr_dir->dir) {
+            somedirent = readdir(curr_dir->dir);
 
+            log_msg(LOG_DIR, "readdir", "'%s'", curr_dir->name ? curr_dir->name : "<unknown>");
+        } else {
+            somedirent = NULL;
+        }
+    } else {
+        somedirent = NULL;
+    }
+
+    /* End of the directory */
     if(!somedirent) {
         send_uint(0);
         return;
@@ -457,15 +620,19 @@ void dc_rewinddir(void) {
     uint32_t i = recv_uint();
 
     if(i >= DIRENT_OFFSET && i < MAX_OPEN_DIRS + DIRENT_OFFSET) {
-        rewinddir(opendirs[i - DIRENT_OFFSET]);
-        opendirs[i - DIRENT_OFFSET] = NULL;
+        dir_data *curr_dir = &opendirs[i - DIRENT_OFFSET];
+        if(curr_dir->dir) {
+            log_msg(LOG_DIR, "rewinddir", "'%s'", curr_dir->name ? curr_dir->name : "<unknown>");
+
+            rewinddir(curr_dir->dir);
+        }
+
         retval = 0;
-    }
-    else {
+    } else {
         retval = -1;
     }
 
-    send_uint(0);
+    send_uint(retval);
 }
 
 void dc_cdfs_redir_read_sectors(int isofd) {
@@ -475,6 +642,8 @@ void dc_cdfs_redir_read_sectors(int isofd) {
 
     start = recv_uint();
     num = recv_uint();
+
+    log_msg(LOG_CDFS, "cdfs", "lba %d count %d", start, num);
 
     start -= 150;
 

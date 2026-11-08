@@ -22,6 +22,28 @@
 #ifndef __SYSCALLS_H__
 #define __SYSCALLS_H__
 
+// Log groups for verbose logging
+#define LOG_OPEN        (1 << 0)
+#define LOG_CLOSE       (1 << 1)
+#define LOG_READ        (1 << 2)
+#define LOG_WRITE       (1 << 3)
+#define LOG_SEEK        (1 << 4)
+#define LOG_STAT        (1 << 5)
+#define LOG_DELETE      (1 << 6)
+#define LOG_LINK        (1 << 7)
+#define LOG_CHDIR       (1 << 8)
+#define LOG_CHMOD       (1 << 9)
+#define LOG_UTIME       (1 << 10)
+#define LOG_DIR         (1 << 11)
+#define LOG_TIME        (1 << 12)
+#define LOG_CDFS        (1 << 13)
+#define LOG_ALL         ((1 << 14) - 1)
+
+extern unsigned int enabled_log_groups;
+
+int parse_log_groups(const char *arg);
+void help_log_groups(void);
+
 void dc_fstat(void);
 void dc_write(void);
 void dc_read(void);

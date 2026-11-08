@@ -860,6 +860,8 @@ void usage(void) {
 #endif
     printf("-i <isofile>  Enable cdfs redirection using iso image <isofile>\n");
     printf("-g            Start a GDB server\n");
+    printf("-v <groups>   Log fileserver requests to stderr, <groups> is a comma-separated\n");
+    printf("              list such as open,delete (-v help lists all groups)\n");
     printf("-h            Usage information (you\'re looking at it)\n\n");
     cleanup();
 }
@@ -1248,9 +1250,9 @@ void do_dumbterm(void) {
 }
 
 #ifdef __MINGW32__
-#define AVAILABLE_OPTIONS       "x:u:d:a:s:t:b:i:npqheEg"
+#define AVAILABLE_OPTIONS       "x:u:d:a:s:t:b:i:v:npqheEg"
 #else
-#define AVAILABLE_OPTIONS       "x:u:d:a:s:t:b:c:i:npqheEg"
+#define AVAILABLE_OPTIONS       "x:u:d:a:s:t:b:c:i:v:npqheEg"
 #endif
 
 int main(int argc, char *argv[]) {
@@ -1355,6 +1357,18 @@ int main(int argc, char *argv[]) {
                 open_gdb_socket(2159);
                 gdb_socket_started = 1;
                 break;
+            case 'v':
+                if(!strcmp(optarg, "help")) {
+                    help_log_groups();
+                    cleanup();
+                    exit(0);
+                }
+                if(parse_log_groups(optarg)) {
+                    help_log_groups();
+                    cleanup();
+                    exit(-1);
+                }
+                break;
             default:
                 break;
         }
@@ -1392,6 +1406,9 @@ int main(int argc, char *argv[]) {
 
     if(use_extclk)
         printf("External clock usage enabled\n");
+
+    if(enabled_log_groups)
+        printf("Fileserver request logging enabled\n");
 
 #ifndef __APPLE__
     /* test for reasonable baud - this is for POSIX systems */
